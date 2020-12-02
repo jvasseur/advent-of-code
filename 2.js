@@ -1,14 +1,6 @@
-import fs from 'fs';
+import parseInput from './parseInput.js';
 
-const input = fs.readFileSync('2.txt', 'utf8').split('\n')
-    .filter((line) => line !== '')
-    .map((line) => /^(?<min>\d+)-(?<max>\d+) (?<letter>\w): (?<password>\w+)$/.exec(line))
-    .map((line) => line.groups)
-    .map((line) => ({
-        ...line,
-        min: parseInt(line.min, 10),
-        max: parseInt(line.max, 10)
-    }));
+const input = parseInput('2.txt', '{min:int}-{max:int} {letter:char}: {password:string}');
 
 let valid = 0;
 
@@ -31,9 +23,6 @@ console.log(valid);
 let valid2 = 0;
 
 for (const { min, max, letter, password } of input) {
-    console.log({ min, max, letter, password });
-    console.log(password.charAt(min - 1));
-    console.log(password.charAt(max - 1));
     if ((password.charAt(min - 1) === letter) ^ (password.charAt(max - 1) === letter)) {
         valid2++;
     }
