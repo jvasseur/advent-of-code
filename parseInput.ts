@@ -6,7 +6,7 @@ const types: Record<string, { regex: string, parser: (value: string) => any }> =
         parser: identity,
     },
     int: {
-        regex: '\\d+',
+        regex: '[-+]?\\d+',
         parser: (value :string): number => parseInt(value, 10),
     },
     string: {
