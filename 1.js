@@ -1,6 +1,4 @@
-import fs from 'fs';
-
-const input = fs.readFileSync('1.txt', 'utf8').split('\n').map((value) => parseInt(value, 10));
+const input = (await Deno.readTextFile('1.txt')).split('\n').map((value) => parseInt(value, 10));
 
 for (const a of input) {
     for (const b of input) {
