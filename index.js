@@ -13,7 +13,7 @@ const exists = async (filePath) => {
     }
 }
 
-await Promise.all(range(1, 9).map(async (i) => {
+await Promise.all(range(1, 10).map(async (i) => {
     if (await exists(`./${i}.ts`)) {
         await import(`./${i}.ts`);
     } else {
