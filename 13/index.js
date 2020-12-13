@@ -1,17 +1,14 @@
 import reduceAll from '../utils/reduceAll.ts';
 
 const gcd = (a, b) => {
-    let t;
     while (b != 0) {
-       t = b;
-       b = a % b;
-       a = t;
+       [a, b] = [b, a % b];
     }
 
     return a;
 }
 
-const lcm = (n1, n2) => (n1 * n2) / gcd(n1, n2);
+const lcm = (a, b) => (a * b) / gcd(a, b);
 
 const [timestampInput, busesInput] = (await Deno.readTextFile('input.txt')).split('\n');
 
@@ -34,13 +31,13 @@ const buses = busesInput.split(',').map((busInput) => busInput === 'x' ? busInpu
 {
     const availableBuses = [...buses.entries()].filter(([key, value]) => value !== 'x');
 
-    const result = reduceAll((previous, curent) => {
+    const result = reduceAll((previous, current) => {
         let timestamp = previous[0];
-        while ((timestamp + curent[0]) % curent[1] !== 0) {
+        while ((timestamp + current[0]) % current[1] !== 0) {
             timestamp += previous[1];
         }
 
-        return [timestamp, lcm(previous[1], curent[1])];
+        return [timestamp, lcm(previous[1], current[1])];
     }, availableBuses);
 
     console.log(result[0]);
