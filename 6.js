@@ -1,3 +1,5 @@
+import reduceAll from './utils/reduceAll.js'
+
 const intersect = (a, b) => a.filter((value) => b.includes(value));
 
 const input = await Deno.readTextFile('6.txt');
@@ -9,7 +11,7 @@ const sumOne = groupOneAnswers.flat().length;
 
 console.log(sumOne);
 
-const groupAllAnswers = groups.map((group) => group.reduce((accumulator, current) => accumulator ? intersect(accumulator, current) : current));
+const groupAllAnswers = groups.map((group) => reduceAll((accumulator, current) => intersect(accumulator, current), group));
 const sumAll = groupAllAnswers.flat().length;
 
 console.log(sumAll);
