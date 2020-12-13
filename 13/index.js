@@ -1,4 +1,4 @@
-import reduceAll from '../utils/reduceAll.js';
+import reduceAll from '../utils/reduceAll.ts';
 
 const gcd = (a, b) => {
     let t;
