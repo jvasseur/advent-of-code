@@ -1,4 +1,4 @@
-const input = (await Deno.readTextFile('1.txt')).split('\n').map((value) => parseInt(value, 10));
+const input = (await Deno.readTextFile(new URL('input.txt', import.meta.url))).split('\n').map((value) => parseInt(value, 10));
 
 for (const a of input) {
     for (const b of input) {

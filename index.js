@@ -1,22 +1,11 @@
-const range = (start, end) => [...Array(end-start+1)].map((el, ind) => ind + start);
+import { exists } from 'https://deno.land/std@0.80.0/fs/exists.ts';
 
-const exists = async (filePath) => {
-    try {
-        await Deno.lstat(filePath);
-        return true;
-    } catch (err) {
-        if (err instanceof Deno.errors.NotFound) {
-            return false;
-        }
+const range = (start, end) => [...Array(end - start + 1)].map((el, ind) => ind + start);
 
-        throw err;
-    }
-}
-
-await Promise.all(range(1, 10).map(async (i) => {
-    if (await exists(`./${i}.ts`)) {
-        await import(`./${i}.ts`);
+await Promise.all(range(1, 15).map(async (i) => {
+    if (await exists(`./${i}/index.ts`)) {
+        await import(`./${i}/index.ts`);
     } else {
-        await import(`./${i}.js`);
+        await import(`./${i}/index.js`);
     }
 }));

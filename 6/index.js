@@ -1,8 +1,8 @@
-import reduceAll from './utils/reduceAll.ts'
+import reduceAll from '../utils/reduceAll.ts'
 
 const intersect = (a, b) => a.filter((value) => b.includes(value));
 
-const input = await Deno.readTextFile('6.txt');
+const input = await Deno.readTextFile(new URL('input.txt', import.meta.url));
 
 const groups = input.split('\n\n').map((group) => group.split('\n').filter((person) => person !== '').map((person) => person.split('')));
 

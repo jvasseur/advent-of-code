@@ -1,25 +1,25 @@
-const input = await Deno.readTextFile('4.txt');
+const input = await Deno.readTextFile(new URL('input.txt', import.meta.url));
 
 const validateYear = (min: number, max: number, year: string) => {
     if (!/^[0-9]{4}$/.test(year)) {
         return false;
     }
-    
+
     const parsedYear = parseInt(year, 10)
-    
+
     return parsedYear >= min && parsedYear <= max;
 }
 
 const validateHeigh = (height: string) => {
     if (/^[0-9]+cm$/.test(height)) {
         const size = parseInt(height.slice(0, -2));
-        
+
         return size >= 150 && size <= 193;
     }
 
     if (/^[0-9]+in$/.test(height)) {
         const size = parseInt(height.slice(0, -2));
-        
+
         return size >= 59 && size <= 76;
     }
 

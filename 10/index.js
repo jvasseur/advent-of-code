@@ -1,4 +1,4 @@
-const input = (await Deno.readTextFile('10.txt')).split('\n').filter((line) => line !== '');
+const input = (await Deno.readTextFile(new URL('input.txt', import.meta.url))).split('\n').filter((line) => line !== '');
 
 const adapters = input.map((adapter) => parseInt(adapter, 10));
 

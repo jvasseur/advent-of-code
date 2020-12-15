@@ -1,6 +1,6 @@
-import Grid from './11/Grid.ts';
+import Grid from './Grid.ts';
 
-const input = await Deno.readTextFile('11.txt');
+const input = await Deno.readTextFile(new URL('input.txt', import.meta.url));
 
 const inputGrid = Grid.fromString(input);
 

@@ -1,4 +1,4 @@
-const input = await Deno.readTextFile('7.txt');
+const input = await Deno.readTextFile(new URL('input.txt', import.meta.url));
 
 const rules = Object.fromEntries(input.split('\n').filter((line) => line !== '').map((rule) => {
     const [containerText, contentsText] = rule.split(' contain ');

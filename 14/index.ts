@@ -1,7 +1,7 @@
 import applyMask from './applyMask.ts';
 import applyMaskV2 from './applyMaskV2.ts';
 
-const input: string[] = (await Deno.readTextFile('input.txt')).split('\n').filter((line: string) => line !== '');
+const input: string[] = (await Deno.readTextFile(new URL('input.txt', import.meta.url))).split('\n').filter((line: string) => line !== '');
 
 interface MaskInstruction {
     type: 'mask',

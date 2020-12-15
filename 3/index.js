@@ -1,4 +1,4 @@
-const input = await Deno.readTextFile('3.txt');
+const input = await Deno.readTextFile(new URL('input.txt', import.meta.url));
 
 const grid = input.split('\n').filter((line) => line !== '').map((line) => line.split(''));
 

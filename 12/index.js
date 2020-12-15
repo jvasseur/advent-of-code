@@ -1,4 +1,4 @@
-import parseInput from '../parseInput.ts';
+import parseInput from '../utils/parseInput.ts';
 import Ship from './Ship.ts';
 import ShipWithWaypoint from './ShipWithWaypoint.ts';
 
@@ -22,7 +22,7 @@ const actionMapWithWaypoint = {
     F: 'moveForward',
 };
 
-const input = await parseInput('input.txt', '{action:char}{value:int}');
+const input = await parseInput(new URL('input.txt', import.meta.url), '{action:char}{value:int}');
 
 
 const ship = new Ship();

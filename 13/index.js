@@ -10,7 +10,7 @@ const gcd = (a, b) => {
 
 const lcm = (a, b) => (a * b) / gcd(a, b);
 
-const [timestampInput, busesInput] = (await Deno.readTextFile('input.txt')).split('\n');
+const [timestampInput, busesInput] = (await Deno.readTextFile(new URL('input.txt', import.meta.url))).split('\n');
 
 const timestamp = parseInt(timestampInput, 10);
 const buses = busesInput.split(',').map((busInput) => busInput === 'x' ? busInput : parseInt(busInput, 10));

@@ -1,6 +1,6 @@
-import parseInput from './parseInput.ts';
+import parseInput from '../utils/parseInput.ts';
 
-const input = await parseInput('8.txt', '{operation:string} {argument:int}');
+const input = await parseInput(new URL('input.txt', import.meta.url), '{operation:string} {argument:int}');
 
 const run = (instructions = input) => {
     let accumulator = 0;

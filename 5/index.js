@@ -1,4 +1,4 @@
-const input = await Deno.readTextFile('5.txt');
+const input = await Deno.readTextFile(new URL('input.txt', import.meta.url));
 
 const seats = input.split('\n').filter((line) => line !== '');
 

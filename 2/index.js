@@ -1,6 +1,6 @@
-import parseInput from './parseInput.ts';
+import parseInput from '../utils/parseInput.ts';
 
-const input = await parseInput('2.txt', '{min:int}-{max:int} {letter:char}: {password:string}');
+const input = await parseInput(new URL('input.txt', import.meta.url), '{min:int}-{max:int} {letter:char}: {password:string}');
 
 let valid = 0;
 
