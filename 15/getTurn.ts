@@ -1,5 +1,5 @@
 const getTurn = (initialTurns: number[], turn: number): number => {
-    const seen: Record<number, number> = {};
+    const seen = new Uint32Array(turn);
 
     const init = [...initialTurns];
 
@@ -9,10 +9,10 @@ const getTurn = (initialTurns: number[], turn: number): number => {
         seen[number] = index + 1;
     }
 
-    for (let i = initialTurns.length + 1; i <= turn; i++) {
-        const next = previous in seen ? i - 1 - seen[previous] : 0;
+    for (let i = initialTurns.length; i < turn; i++) {
+        const next = seen[previous] ? i - seen[previous] : 0;
 
-        seen[previous] = i - 1;
+        seen[previous] = i;
 
         previous = next;
     }
