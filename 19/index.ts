@@ -1,7 +1,6 @@
+import parseInt10 from '../utils/parseInt10.ts'
 import isValid from './isValid.ts';
 import { Rule } from './types.ts';
-
-const parseInt10 = (number: string) => parseInt(number, 10);
 
 const input = await Deno.readTextFile(new URL('input.txt', import.meta.url));
 
