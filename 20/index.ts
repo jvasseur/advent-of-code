@@ -2,6 +2,10 @@ import parseInt10 from '../utils/parseInt10.ts'
 import { Tile, BaseTile } from './Tile.ts';
 import Image from './Image.ts';
 import transform from './transform.ts';
+import grid from '../utils/grid.ts';
+import getBaseRoughness from './getBaseRoughness.ts';
+import searchMonster from './searchMonster.ts';
+import { transformPicture } from './Picture.ts';
 
 const size = 12;
 const input = (await Deno.readTextFile(new URL('input.txt', import.meta.url))).replace(/\n+$/, '');
@@ -26,7 +30,7 @@ const fitTiles = (initial: Image, tiles: Tile[]): [Image, Tile[]] => {
     while (remaining.length > 0) {
         const count = remaining.length;
 
-        const fits: Tile[][][] = [...Array(size)].map(() => [...Array(size)].map(() => []));
+        const fits: Tile[][][] = grid(24, 24, []);
 
         for (let x = 0; x < size; x++) {
             for (let y = 0; y < size; y++) {
@@ -107,21 +111,25 @@ const fitTiles = (initial: Image, tiles: Tile[]): [Image, Tile[]] => {
 const resolve = (): Image => {
     let image = new Image();
 
-    for (const tile of tiles) {
-        const remaining = tiles.filter((i) => i.id !== tile.id);
+    const tile = tiles.find((i) => i.id === 3253);
 
-        for (const transformation of transform(tile)) {
-            try {
-                [image] = fitTiles(image.withTile(8, 8, transformation), remaining);
+    if (!tile) {
+        throw new Error('Tile not found');
+    }
 
-                return image;
-            } catch (error) {
-                if (error instanceof InvalidError) {
-                    continue;
-                }
+    const remaining = tiles.filter((i) => i.id !== tile.id);
 
-                throw error;
+    for (const transformation of transform(tile)) {
+        try {
+            [image] = fitTiles(image.withTile(8, 8, transformation), remaining);
+
+            return image;
+        } catch (error) {
+            if (error instanceof InvalidError) {
+                continue;
             }
+
+            throw error;
         }
     }
 
@@ -138,3 +146,19 @@ console.log(
     result.getTile(size - 1, 0).id *
     result.getTile(size - 1, size - 1).id
 );
+
+const baseRoughness = getBaseRoughness(result);
+
+console.log(`Base roughness: ${baseRoughness}`);
+
+for (const picture of transformPicture(result)) {
+    const seaMonsters = searchMonster(picture);
+
+    if (seaMonsters > 0) {
+        console.log(`Monsters: ${seaMonsters}`);
+
+        console.log(`Roughness: ${baseRoughness - seaMonsters * 15}`);
+
+        break;
+    }
+}

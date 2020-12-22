@@ -1,3 +1,5 @@
+import { Rotation, Flip } from './transformations.ts';
+
 interface Tile {
     id: number;
     get(x: number, y: number): string;
@@ -38,12 +40,6 @@ class BaseTile implements Tile {
     }
 }
 
-enum Rotation {
-    Rotate90,
-    Rotate180,
-    Rotate270,
-}
-
 class RotatedTile implements Tile {
     #parent: Tile;
     #rotation: Rotation;
@@ -67,11 +63,6 @@ class RotatedTile implements Tile {
                 return this.#parent.get(9 - y, x);
         }
     }
-}
-
-enum Flip {
-    VerticalFlip,
-    HorizontalFlip,
 }
 
 class FlippedTile implements Tile {
@@ -98,4 +89,4 @@ class FlippedTile implements Tile {
 }
 
 export type { Tile };
-export { BaseTile, equals, RotatedTile, Rotation, Flip, FlippedTile };
+export { BaseTile, equals, RotatedTile, FlippedTile };

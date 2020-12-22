@@ -1,5 +1,6 @@
 import { assertEquals } from 'https://deno.land/std@0.80.0/testing/asserts.ts';
-import { BaseTile, equals, Flip, FlippedTile, RotatedTile, Rotation } from './Tile.ts';
+import { BaseTile, equals, FlippedTile, RotatedTile } from './Tile.ts';
+import { Flip, Rotation } from './transformations.ts';
 
 Deno.test('Rotation 90', () => {
     const base = new BaseTile(0, [

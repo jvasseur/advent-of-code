@@ -1,8 +1,6 @@
 
-import { Tile, Rotation, Flip, RotatedTile, FlippedTile } from './Tile.ts';
-
-const rotations = [null, Rotation.Rotate90, Rotation.Rotate180, Rotation.Rotate270];
-const flips = [null, Flip.VerticalFlip, Flip.HorizontalFlip];
+import { Tile, RotatedTile, FlippedTile } from './Tile.ts';
+import { rotations, flips } from './transformations.ts';
 
 const transform = (tile: Tile): Tile[] => {
     let transformations: Tile[] = [];

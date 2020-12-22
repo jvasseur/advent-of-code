@@ -1,4 +1,5 @@
 import { Tile } from './Tile.ts';
+import Picture from './Picture.ts'
 
 const adjascents: [-1|0|1, -1|0|1][] = [
     [1, 0],
@@ -17,7 +18,7 @@ const adjascentEdge = {
     1: 0,
 };
 
-class Image {
+class Image implements Picture {
     #data: Tile[][] = [...Array(12)].map(() => [...Array(12)]);
 
     hasTile(x: number, y: number): boolean {
@@ -30,6 +31,15 @@ class Image {
 
     hasAdjascent(x: number, y: number): boolean {
         return adjascents.some(([dx, dy]) => this.hasTile(x + dx, y + dy));
+    }
+
+    get(x: number, y: number): string {
+        const tyleX = Math.floor(x / 8);
+        const tyleY = Math.floor(y / 8);
+
+        const tyle = this.getTile(tyleX, tyleY)
+
+        return tyle.get(x % 8 + 1, y % 8 + 1);
     }
 
     fit(x: number, y: number, tile: Tile): boolean {
