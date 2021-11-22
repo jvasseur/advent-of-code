@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+cd $(dirname $(dirname $0))
+
+# Load env
+set -a
+. ./.env
+set +a
+
+# Parse parameters
+YEAR=$1
+DAY=$2
+
+# Download file
+curl \
+    --location \
+    --cookie session=$SESSION_COOKIE \
+    --output $YEAR/input/day$DAY.txt \
+    https://adventofcode.com/$YEAR/day/$DAY/input
