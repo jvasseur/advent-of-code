@@ -1,16 +1,11 @@
+use advent_of_code_2015::{read, parse_lines};
 use nom::IResult;
-use nom::character::complete::char;
-use nom::character::complete::u32;
-use nom::character::complete::newline;
-use nom::error::Error;
-use nom::multi::many0;
-use nom::sequence::terminated;
+use nom::character::complete::{char, u32};
 use nom::sequence::tuple;
 use std::cmp::min;
-use super::util::apply;
 
 #[derive(Clone,Debug,Eq,PartialEq)]
-pub struct Gift {
+struct Gift {
     l: u32,
     h: u32,
     w: u32,
@@ -40,37 +35,40 @@ impl Gift {
     }
 }
 
-pub fn parse_line(input: &str) -> IResult<&str, Gift> {
+fn parser(input: &str) -> IResult<&str, Gift> {
     let (rest, (l, _, h, _, w)) = tuple((u32, char('x'), u32, char('x'), u32))(input)?;
 
     Ok((rest, Gift { l, h, w }))
 }
 
-pub fn parse(input: &str) -> Result<Vec<Gift>, Error<&str>> {
-    apply(many0(terminated(parse_line, newline)), input)
-}
-
-pub fn solve_part1(input: &[Gift]) -> u32 {
+fn solve_part1(input: &[Gift]) -> u32 {
     input.iter().fold(0, |wrapping, gift: &Gift| wrapping + gift.wrapping())
 }
 
-pub fn solve_part2(input: &[Gift]) -> u32 {
+fn solve_part2(input: &[Gift]) -> u32 {
     input.iter().fold(0, |wrapping, gift: &Gift| wrapping + gift.ribon())
+}
+
+fn main() {
+    let input = read(2);
+
+    let parsed_input = parse_lines(parser, &input);
+
+    println!("{}", solve_part1(&parsed_input));
+    println!("{}", solve_part2(&parsed_input));
 }
 
 #[cfg(test)]
 mod tests {
     use super::Gift;
-    use super::parse;
+    use super::parser;
     use super::solve_part1;
     use super::solve_part2;
 
     #[test]
     fn test_parse() {
-        assert_eq!(parse("4x3x2\n1x2x3\n"), Ok(vec![
-            Gift { l: 4, h: 3, w: 2 },
-            Gift { l: 1, h: 2, w: 3 },
-        ]));
+        assert_eq!(parser("4x3x2"), Ok(("", Gift { l: 4, h: 3, w: 2 })));
+        assert_eq!(parser("1x2x3"), Ok(("", Gift { l: 1, h: 2, w: 3 })));
     }
 
     #[test]

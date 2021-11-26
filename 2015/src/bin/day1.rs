@@ -1,31 +1,31 @@
+use advent_of_code_2015::{read, parse};
 use nom::branch::alt;
 use nom::character::complete::char;
 use nom::combinator::value;
-use nom::error::Error;
 use nom::multi::many0;
-use super::util::apply;
+use nom::IResult;
 
 #[derive(Clone,Debug,Eq,PartialEq)]
-pub enum Instruction {
+enum Instruction {
     Up,
     Down,
 }
 
-pub fn parse(input: &str) -> Result<Vec<Instruction>, Error<&str>> {
-    apply(many0(alt((
+fn parser(input: &str) -> IResult<&str, Vec<Instruction>> {
+    many0(alt((
         value(Instruction::Up, char('(')),
         value(Instruction::Down, char(')')),
-    ))), input)
+    )))(input)
 }
 
-pub fn solve_part1(input: &[Instruction]) -> i32 {
+fn solve_part1(input: &[Instruction]) -> i32 {
     input.iter().fold(0, |floor, instruction: &Instruction| match instruction {
         Instruction::Up => floor + 1,
         Instruction::Down => floor - 1,
     })
 }
 
-pub fn solve_part2(input: &[Instruction]) -> u32 {
+fn solve_part2(input: &[Instruction]) -> u32 {
     let mut index: u32 = 0;
     let mut floor: i32 = 0;
 
@@ -44,21 +44,30 @@ pub fn solve_part2(input: &[Instruction]) -> u32 {
     panic!("Here be dragons");
 }
 
+fn main() {
+    let input = read(1);
+
+    let parsed_input = parse(parser, &input);
+
+    println!("{}", solve_part1(&parsed_input));
+    println!("{}", solve_part2(&parsed_input));
+}
+
 #[cfg(test)]
 mod tests {
     use super::Instruction;
-    use super::parse;
+    use super::parser;
     use super::solve_part1;
     use super::solve_part2;
 
     #[test]
     fn test_parse() {
-        assert_eq!(parse("(())"), Ok(vec![
+        assert_eq!(parser("(())"), Ok(("", vec![
             Instruction::Up,
             Instruction::Up,
             Instruction::Down,
             Instruction::Down,
-        ]));
+        ])));
     }
 
     #[test]
