@@ -1,15 +1,19 @@
 use advent_of_code_2015::read;
 use md5::compute;
 
+fn hash(input: &str, salt: u32) -> [u8; 16] {
+    compute(format!("{}{}", input, salt)).into()
+}
+
 fn solve_part1(input: &str) -> u32 {
     let mut number = 0;
 
     loop {
         number += 1;
 
-        let hash = compute(format!("{}{}", input, number));
+        let hash = hash(input, number);
 
-        if format!("{:x}", hash).starts_with("00000") {
+        if hash[0] == 0 && hash[1] == 0 && hash[2] < 16 {
             return number;
         }
     }
@@ -21,9 +25,9 @@ fn solve_part2(input: &str) -> u32 {
     loop {
         number += 1;
 
-        let hash = compute(format!("{}{}", input, number));
+        let hash = hash(input, number);
 
-        if format!("{:x}", hash).starts_with("000000") {
+        if hash[0] == 0 && hash[1] == 0 && hash[2] == 0 {
             return number;
         }
     }
@@ -43,6 +47,7 @@ mod tests {
     use super::solve_part1;
 
     #[test]
+    #[ignore]
     fn test_solve_part1() {
         assert_eq!(solve_part1("abcdef"), 609043);
         assert_eq!(solve_part1("pqrstuv"), 1048970);
