@@ -2,28 +2,12 @@ use advent_of_code_2021::{read, parse_lines};
 use itertools::Itertools;
 use nom::character::complete::u32;
 
-fn solve_part1(input: &[u32]) -> u32 {
-    let mut increased = 0;
-
-    for (a, b) in input.iter().tuple_windows() {
-        if b > a {
-            increased += 1;
-        }
-    }
-
-    return increased;
+fn solve_part1(input: &[u32]) -> usize {
+    input.iter().tuple_windows().filter(|(a, b)| b > a).count()
 }
 
-fn solve_part2(input: &[u32]) -> u32 {
-    let mut increased = 0;
-
-    for (a, _, _, b) in input.iter().tuple_windows() {
-        if b > a {
-            increased += 1;
-        }
-    }
-
-    return increased;
+fn solve_part2(input: &[u32]) -> usize {
+    input.iter().tuple_windows().filter(|(a, _, _, b)| b > a).count()
 }
 
 fn main() {
