@@ -1,4 +1,5 @@
 use advent_of_code_2021::{read, parse};
+use advent_of_code_2021::util::abs_diff;
 use nom::IResult;
 use nom::bytes::complete::tag;
 use nom::character::complete::newline;
@@ -23,12 +24,12 @@ fn mean(input: &[u32]) -> u32 {
 fn solve_part1(input: &[u32]) -> u32 {
     let mean = mean(input);
 
-    input.iter().map(|&x| if x > mean { x - mean } else { mean - x }).sum()
+    input.iter().map(|&x| abs_diff(x, mean)).sum()
 }
 
 fn calc_part2(input: &[u32], pos: u32) -> u32 {
     input.iter().map(|&x| {
-        let n = if x > pos { x - pos } else { pos - x };
+        let n = abs_diff(x, pos);
 
         n * (n + 1) / 2
     }).sum()

@@ -1,4 +1,5 @@
 use advent_of_code_2021::{read, parse_lines};
+use advent_of_code_2021::util::abs_diff;
 use nom::IResult;
 use nom::bytes::complete::tag;
 use nom::character::complete::u16;
@@ -53,23 +54,17 @@ impl Line {
         };
 
         let steps = if xsign != 0 {
-            let x1: i32 = self.point1.x.into();
-            let x2: i32 = self.point2.x.into();
-
-            (x1 - x2).abs()
+            abs_diff(self.point1.x, self.point2.x)
         } else {
-            let y1: i32 = self.point1.y.into();
-            let y2: i32 = self.point2.y.into();
-
-            (y1 - y2).abs()
+            abs_diff(self.point1.y, self.point2.y)
         };
 
         Vec::from_iter((0..=steps).map(|i| {
             let xbase: i32 = self.point1.x.into();
             let ybase: i32 = self.point1.y.into();
 
-            let x = xbase + xsign * i;
-            let y = ybase + ysign * i;
+            let x = xbase + xsign * i as i32;
+            let y = ybase + ysign * i as i32;
 
             Point::new(x.try_into().unwrap(), y.try_into().unwrap())
         }))
