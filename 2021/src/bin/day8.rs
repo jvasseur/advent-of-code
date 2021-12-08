@@ -4,7 +4,8 @@ use nom::bytes::complete::tag;
 use nom::character::complete::alpha1;
 use nom::multi::separated_list0;
 use nom::sequence::separated_pair;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
+use std::collections::HashMap;
 
 type Pattern<'a> = &'a str;
 type Patterns<'a> = Vec<Pattern<'a>>;
@@ -40,7 +41,7 @@ fn solve_part1(input: &[(Patterns, Output)]) -> u32 {
     count
 }
 
-fn to_hash(input: &str) -> HashSet<char> {
+fn to_hash(input: &str) -> BTreeSet<char> {
     input.chars().collect()
 }
 
@@ -48,7 +49,7 @@ fn solve_part2(input: &[(Patterns, Output)]) -> u32 {
     let mut sum = 0;
 
     for (patterns, outputs) in input {
-        let hashes: Vec<HashSet<char>> = patterns.iter().map(|pattern| to_hash(pattern)).collect();
+        let hashes: Vec<BTreeSet<char>> = patterns.iter().map(|pattern| to_hash(pattern)).collect();
 
         let p1 = hashes.iter().find(|&pattern| pattern.len() == 2).unwrap();
         let p4 = hashes.iter().find(|&pattern| pattern.len() == 4).unwrap();
@@ -63,57 +64,24 @@ fn solve_part2(input: &[(Patterns, Output)]) -> u32 {
         let p5 = hashes.iter().find(|&pattern| pattern.len() == 5 && !pattern.is_superset(p1) && pattern.is_subset(p6)).unwrap();
         let p2 = hashes.iter().find(|&pattern| pattern.len() == 5 && !pattern.is_superset(p1) && !pattern.is_subset(p6)).unwrap();
 
-        let outputs_hashes: Vec<HashSet<char>> = outputs.iter().map(|output| to_hash(output)).collect();
+        let map = HashMap::from([
+            (p0, 0),
+            (p1, 1),
+            (p2, 2),
+            (p3, 3),
+            (p4, 4),
+            (p5, 5),
+            (p6, 6),
+            (p7, 7),
+            (p8, 8),
+            (p9, 9),
+        ]);
+
+        let outputs_hashes: Vec<BTreeSet<char>> = outputs.iter().map(|output| to_hash(output)).collect();
 
         let mut num = 0;
         for (i, hash) in outputs_hashes.iter().rev().enumerate() {
-            let mut value = None;
-
-            if hash == p0 {
-                value = Some(0);
-            }
-
-            if hash == p1 {
-                value = Some(1);
-            }
-
-            if hash == p2 {
-                value = Some(2);
-            }
-
-            if hash == p3 {
-                value = Some(3);
-            }
-
-            if hash == p4 {
-                value = Some(4);
-            }
-
-            if hash == p5 {
-                value = Some(5);
-            }
-
-            if hash == p6 {
-                value = Some(6);
-            }
-
-            if hash == p7 {
-                value = Some(7);
-            }
-
-            if hash == p7 {
-                value = Some(7);
-            }
-
-            if hash == p8 {
-                value = Some(8);
-            }
-
-            if hash == p9 {
-                value = Some(9);
-            }
-
-            num += value.unwrap() * 10_u32.pow(i as u32);
+            num += map.get(hash).unwrap() * 10_u32.pow(i as u32);
         }
 
         sum += num;
