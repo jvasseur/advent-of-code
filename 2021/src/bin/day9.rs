@@ -101,11 +101,13 @@ fn solve_part2(input: &[Vec<u8>]) -> usize {
 
     map.compute_bassins();
 
-    let mut sizes: Vec<usize> = map.bassins.into_values().map(|bassin| bassin.len()).collect();
-
-    sizes.sort_unstable();
-
-    sizes.iter().rev().take(3).product()
+    map.bassins
+        .into_values()
+        .map(|bassin| bassin.len())
+        .sorted()
+        .rev()
+        .take(3)
+        .product()
 }
 
 fn main() {
