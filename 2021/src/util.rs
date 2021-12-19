@@ -41,6 +41,13 @@ where
         self.remove_count(value, 1);
     }
 
+    pub fn get(&self, value: &T) -> usize {
+        match self.storage.get(value) {
+            None => 0,
+            Some(count) => *count,
+        }
+    }
+
     pub fn values(&self) -> Values<T, usize> {
         self.storage.values()
     }

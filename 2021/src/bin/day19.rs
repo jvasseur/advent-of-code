@@ -1,4 +1,5 @@
 use advent_of_code_2021::{parse, read};
+use advent_of_code_2021::util::Counter;
 use itertools::Itertools;
 use nom::bytes::complete::tag;
 use nom::character::complete::i32;
@@ -148,22 +149,6 @@ impl Translated<'_> {
             .map(|(x, y, z)| (x + dx, y + dy, z + dz))
             .collect()
     }
-
-    fn intersect(&self, second: &impl Map) -> bool {
-        let mut intersection = 0;
-
-        for point in &self.points() {
-            if second.has(point) {
-                intersection += 1;
-
-                if intersection >= 12 {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
 }
 
 impl Map for Translated<'_> {
@@ -182,23 +167,21 @@ fn solve(input: &[Scanner]) -> (usize, i32) {
     let mut map = remainings.swap_remove(0);
 
     'main: while remainings.len() > 0 {
-        println!("{} remaining", remainings.len());
-
         for (i, remaining) in remainings.iter().enumerate() {
-            println!("testing {}", i);
-
             for rotation in remaining.rotations() {
+                let mut counter = Counter::new();
+
                 for (x1, y1, z1) in &rotation.points {
                     for (x2, y2, z2) in &map.points {
                         // x1 + xt = x2
                         // xt = x2 - x1
                         let translation = (x2 - x1, y2 - y1, z2 - z1);
 
-                        let translated = rotation.translate(translation);
+                        counter.increment(&translation);
 
-                        if translated.intersect(&map) {
+                        if counter.get(&translation) >= 12 {
                             positions.push(translation);
-                            map.points.extend(&translated.points());
+                            map.points.extend(&rotation.translate(translation).points());
 
                             remainings.swap_remove(i);
 
