@@ -125,22 +125,6 @@ impl Scanner {
             translation,
         }
     }
-
-    fn intersect(&self, second: &impl Map) -> bool {
-        let mut intersection = 0;
-
-        for point in &self.points {
-            if second.has(point) {
-                intersection += 1;
-
-                if intersection >= 12 {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
 }
 
 impl Map for Scanner {
@@ -164,6 +148,22 @@ impl Translated<'_> {
             .map(|(x, y, z)| (x + dx, y + dy, z + dz))
             .collect()
     }
+
+    fn intersect(&self, second: &impl Map) -> bool {
+        let mut intersection = 0;
+
+        for point in &self.points() {
+            if second.has(point) {
+                intersection += 1;
+
+                if intersection >= 12 {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }
 
 impl Map for Translated<'_> {
@@ -179,7 +179,7 @@ fn solve(input: &[Scanner]) -> (usize, i32) {
 
     let mut remainings = input.to_owned();
 
-    let mut map = remainings.remove(0);
+    let mut map = remainings.swap_remove(0);
 
     'main: while remainings.len() > 0 {
         println!("{} remaining", remainings.len());
@@ -196,11 +196,11 @@ fn solve(input: &[Scanner]) -> (usize, i32) {
 
                         let translated = rotation.translate(translation);
 
-                        if map.intersect(&translated) {
+                        if translated.intersect(&map) {
                             positions.push(translation);
                             map.points.extend(&translated.points());
 
-                            remainings.remove(i);
+                            remainings.swap_remove(i);
 
                             continue 'main;
                         }
