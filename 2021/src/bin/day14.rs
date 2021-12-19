@@ -1,4 +1,5 @@
 use advent_of_code_2021::{parse, read};
+use advent_of_code_2021::util::Counter;
 use itertools::Itertools;
 use itertools::MinMaxResult::MinMax;
 use nom::bytes::complete::tag;
@@ -9,7 +10,6 @@ use nom::sequence::terminated;
 use nom::sequence::tuple;
 use nom::IResult;
 use std::collections::HashMap;
-use std::collections::HashSet;
 
 fn char_parser(input: &str) -> IResult<&str, char> {
     satisfy(|c| c.is_ascii_uppercase() && c.is_ascii_alphabetic())(input)
@@ -34,25 +34,9 @@ fn parser(input: &str) -> IResult<&str, (Vec<char>, HashMap<(char, char), char>)
     Ok((input, (template, insertions.into_iter().collect())))
 }
 
-fn marge_counts(count_a: HashMap<char, u64>, count_b: HashMap<char, u64>) -> HashMap<char, u64> {
-    let keys_a: HashSet<&char> = count_a.keys().collect();
-    let keys_b: HashSet<&char> = count_b.keys().collect();
-
-    keys_a
-        .union(&keys_b)
-        .into_iter()
-        .map(|key| {
-            (
-                key.to_owned().to_owned(),
-                count_a.get(key).or(Some(&0)).unwrap() + count_b.get(key).or(Some(&0)).unwrap(),
-            )
-        })
-        .collect()
-}
-
 struct Rules {
     rules: HashMap<(char, char), char>,
-    memoized: HashMap<((char, char), u8), HashMap<char, u64>>,
+    memoized: HashMap<((char, char), u8), Counter<char>>,
 }
 
 impl Rules {
@@ -63,38 +47,36 @@ impl Rules {
         }
     }
 
-    fn polymerize_count_chain(&mut self, input: &[char], iterations: u8) -> HashMap<char, u64> {
-        let mut counts = HashMap::new();
+    fn polymerize_count_chain(&mut self, input: &[char], iterations: u8) -> Counter<char> {
+        let mut counts = Counter::new();
 
         for (&a, &b) in input.iter().tuple_windows() {
-            counts = marge_counts(counts, self.polymerize_count((a, b), iterations).to_owned());
+            counts = counts + self.polymerize_count((a, b), iterations).to_owned();
         }
 
         for inserted in input.iter().skip(1).dropping_back(1) {
-            *counts.get_mut(&inserted).unwrap() -= 1;
+            counts.decrement(&inserted);
         }
 
         counts
     }
 
-    fn polymerize_count(&mut self, (a, b): (char, char), iterations: u8) -> &HashMap<char, u64> {
+    fn polymerize_count(&mut self, (a, b): (char, char), iterations: u8) -> &Counter<char> {
         if None == self.memoized.get(&((a, b), iterations)) {
             if iterations == 0 {
-                self.memoized.insert(
-                    ((a, b), iterations),
-                    marge_counts(HashMap::from([(a, 1)]), HashMap::from([(b, 1)])),
-                );
+                let mut counts = Counter::new();
+
+                counts.increment(&a);
+                counts.increment(&b);
+
+                self.memoized.insert(((a, b), iterations), counts);
             } else {
                 let insert = *self.rules.get(&(a, b)).unwrap();
 
-                let mut counts = marge_counts(
-                    self.polymerize_count((a, insert), iterations - 1)
-                        .to_owned(),
-                    self.polymerize_count((insert, b), iterations - 1)
-                        .to_owned(),
-                );
+                let mut counts = self.polymerize_count((a, insert), iterations - 1).to_owned()
+                    + self.polymerize_count((insert, b), iterations - 1).to_owned();
 
-                *counts.get_mut(&insert).unwrap() -= 1;
+                counts.decrement(&insert);
 
                 self.memoized.insert(((a, b), iterations), counts);
             }
@@ -104,7 +86,7 @@ impl Rules {
     }
 }
 
-fn solve_part1(input: &(Vec<char>, HashMap<(char, char), char>)) -> u64 {
+fn solve_part1(input: &(Vec<char>, HashMap<(char, char), char>)) -> usize {
     let mut rules = Rules::new(input.1.to_owned());
 
     let counts = rules.polymerize_count_chain(&input.0, 10);
@@ -116,7 +98,7 @@ fn solve_part1(input: &(Vec<char>, HashMap<(char, char), char>)) -> u64 {
     }
 }
 
-fn solve_part2(input: &(Vec<char>, HashMap<(char, char), char>)) -> u64 {
+fn solve_part2(input: &(Vec<char>, HashMap<(char, char), char>)) -> usize {
     let mut rules = Rules::new(input.1.to_owned());
 
     let counts = rules.polymerize_count_chain(&input.0, 40);
@@ -143,6 +125,7 @@ mod tests {
     use super::solve_part1;
     use super::Rules;
     use std::collections::HashMap;
+    use advent_of_code_2021::util::Counter;
 
     #[test]
     fn test_parser() {
@@ -181,7 +164,7 @@ mod tests {
 
         let counts = rules.polymerize_count(('N', 'N'), 1);
 
-        assert_eq!(counts, &HashMap::from([('C', 1), ('N', 2),]));
+        assert_eq!(counts, &Counter::from([('C', 1), ('N', 2),]));
     }
 
     #[test]
@@ -207,7 +190,7 @@ mod tests {
 
         let counts = rules.polymerize_count(('N', 'C'), 1);
 
-        assert_eq!(counts, &HashMap::from([('C', 1), ('B', 1), ('N', 1),]));
+        assert_eq!(counts, &Counter::from([('C', 1), ('B', 1), ('N', 1),]));
     }
 
     #[test]
@@ -233,7 +216,7 @@ mod tests {
 
         let counts = rules.polymerize_count(('C', 'N'), 1);
 
-        assert_eq!(counts, &HashMap::from([('C', 2), ('N', 1),]));
+        assert_eq!(counts, &Counter::from([('C', 2), ('N', 1),]));
     }
 
     #[test]
@@ -259,7 +242,7 @@ mod tests {
 
         let counts = rules.polymerize_count(('N', 'N'), 2);
 
-        assert_eq!(counts, &HashMap::from([('B', 1), ('C', 2), ('N', 2),]));
+        assert_eq!(counts, &Counter::from([('B', 1), ('C', 2), ('N', 2),]));
     }
 
     #[test]
@@ -285,7 +268,7 @@ mod tests {
 
         let counts = rules.polymerize_count_chain(&vec!['N', 'N', 'C'], 1);
 
-        assert_eq!(counts, HashMap::from([('B', 1), ('C', 2), ('N', 2),]));
+        assert_eq!(counts, Counter::from([('B', 1), ('C', 2), ('N', 2),]));
     }
 
     #[test]
@@ -313,7 +296,7 @@ mod tests {
 
         assert_eq!(
             counts,
-            HashMap::from([('B', 2), ('C', 2), ('H', 1), ('N', 2),])
+            Counter::from([('B', 2), ('C', 2), ('H', 1), ('N', 2),])
         );
     }
 
@@ -342,7 +325,7 @@ mod tests {
 
         assert_eq!(
             counts,
-            HashMap::from([('B', 1749), ('C', 298), ('H', 161), ('N', 865),])
+            Counter::from([('B', 1749), ('C', 298), ('H', 161), ('N', 865),])
         );
     }
 
