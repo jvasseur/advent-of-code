@@ -3,6 +3,7 @@ use nom::bytes::complete::tag;
 use nom::character::complete::u8;
 use nom::sequence::tuple;
 use nom::IResult;
+use std::cmp::max;
 
 fn parser(input: &str) -> IResult<&str, (u8, u8)> {
     let (input, (_, p1, _, p2, _)) = tuple((
@@ -34,6 +35,7 @@ impl PracticeDice {
     }
 }
 
+#[derive(Clone, Copy)]
 struct Pawn {
     position: u32,
 }
@@ -78,12 +80,61 @@ fn solve_part_1(input: (u8, u8)) -> u32 {
     }
 }
 
+fn play_p1((p1_pawn, p2_pawn): (Pawn, Pawn), (p1_score, p2_score): (u32, u32)) -> (u64, u64) {
+    let wins: Vec<(u64, u64)> = (3..=9).map(|advance| {
+        let mut p1_pawn_u = p1_pawn.clone();
+        let mut p1_score_u = p1_score.clone();
+
+        p1_pawn_u.advance(advance);
+        p1_score_u += p1_pawn_u.position;
+
+        if p1_score_u >= 21 {
+            (1, 0)
+        } else {
+            play_p2((p1_pawn_u, p2_pawn), (p1_score_u, p2_score))
+        }
+    }).collect();
+
+    (
+        wins[0].0 + wins[1].0 * 3 + wins[2].0 * 6 + wins[3].0 * 7 + wins[4].0 * 6 + wins[5].0 * 3 + wins[6].0,
+        wins[0].1 + wins[1].1 * 3 + wins[2].1 * 6 + wins[3].1 * 7 + wins[4].1 * 6 + wins[5].1 * 3 + wins[6].1,
+    )
+}
+
+fn play_p2((p1_pawn, p2_pawn): (Pawn, Pawn), (p1_score, p2_score): (u32, u32)) -> (u64, u64) {
+    let wins: Vec<(u64, u64)> = (3..=9).map(|advance| {
+        let mut p2_pawn_u = p2_pawn.clone();
+        let mut p2_score_u = p2_score.clone();
+
+        p2_pawn_u.advance(advance);
+        p2_score_u += p2_pawn_u.position;
+
+        if p2_score_u >= 21 {
+            (0, 1)
+        } else {
+            play_p1((p1_pawn, p2_pawn_u), (p1_score, p2_score_u))
+        }
+    }).collect();
+
+    (
+        wins[0].0 + wins[1].0 * 3 + wins[2].0 * 6 + wins[3].0 * 7 + wins[4].0 * 6 + wins[5].0 * 3 + wins[6].0,
+        wins[0].1 + wins[1].1 * 3 + wins[2].1 * 6 + wins[3].1 * 7 + wins[4].1 * 6 + wins[5].1 * 3 + wins[6].1,
+    )
+}
+
+fn solve_part_2(input: (u8, u8)) -> u64 {
+    let (wins_p1, wins_p2) = play_p1((Pawn::new(input.0), Pawn::new(input.1)), (0, 0));
+
+    max(wins_p1, wins_p2)
+}
+
 fn main() {
     let input = read(21);
 
     let parsed_input = parse(parser, &input);
 
     println!("{}", solve_part_1(parsed_input));
+    println!("{}", solve_part_2(parsed_input));
 }
 
 #[cfg(test)]
@@ -92,6 +143,7 @@ mod tests {
     use super::PracticeDice;
     use super::Pawn;
     use super::solve_part_1;
+    use super::play_p1;
 
     static TEXT: &str = "Player 1 starting position: 4\nPlayer 2 starting position: 8\n";
 
@@ -149,5 +201,10 @@ mod tests {
     #[test]
     fn test_solve_part_1() {
         assert_eq!(solve_part_1((4, 8)), 739785);
+    }
+
+    #[test]
+    fn test_play_p1() {
+        assert_eq!(play_p1((Pawn::new(4), Pawn::new(8)), (0, 0)), (444356092776315, 341960390180808));
     }
 }
