@@ -69,18 +69,12 @@ fn ls_parser(input: &str) -> IResult<&str, Vec<Entry>> {
                     map(preceded(
                         tag("dir "),
                         alpha1,
-                    ), |name: &str| Entry {
-                        name: name.to_owned(),
-                        kind: EntryKind::Dir,
-                    }),
+                    ), |name: &str| Entry::dir(name.to_owned())),
                     map(separated_pair(
                         u32,
                         tag(" "),
                         is_not(" \n"),
-                    ), |(size, name): (u32, &str)| Entry {
-                        name: name.to_owned(),
-                        kind: EntryKind::File(size),
-                    }),
+                    ), |(size, name): (u32, &str)| Entry::file(name.to_owned(), size)),
                 )),
                 tag("\n"),
             ),
