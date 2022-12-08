@@ -12,6 +12,8 @@ struct Grid {
     trees: Vec<Vec<u8>>,
 }
 
+type Point = (usize, usize);
+
 impl Grid {
     pub fn height(&self) -> usize {
         self.trees.len()
@@ -21,30 +23,59 @@ impl Grid {
         self.trees[0].len()
     }
 
-    pub fn get(&self, i: usize, j: usize) -> u8 {
+    pub fn get(&self, (i, j): Point) -> u8 {
         self.trees[i][j]
     }
 
-    pub fn is_visible(&self, i: usize, j: usize) -> bool {
-        let height = self.get(i, j);
-
-        (0..i).all(|ibis| self.get(ibis, j) < height)
-            || (i+1..self.height()).all(|ibis| self.get(ibis, j) < height)
-            || (0..j).all(|jbis| self.get(i, jbis) < height)
-            || (j+1..self.width()).all(|jbis| self.get(i, jbis) < height)
+    pub fn points(&self) -> impl Iterator<Item = Point> {
+        (0..self.height()).cartesian_product(0..self.width())
     }
 
-    pub fn viewing_distance(&self, i: usize, j: usize) -> usize {
-        if i == 0 || j == 0 || i == self.height() - 1 || j == self.width() - 1 {
-            return 0;
-        }
+    pub fn points_up(&self, (i, j): Point) -> impl Iterator<Item = Point> {
+        if i == 0 {
+            1..=0
+        } else {
+            0..=i-1
+        }.rev().map(move |ibis| (ibis, j))
+    }
 
-        let height = self.get(i, j);
+    pub fn points_down(&self, (i, j): Point) -> impl Iterator<Item = Point> {
+        (i+1..self.height()).map(move |ibis| (ibis, j))
+    }
 
-        (0..=i-1).rev().enumerate().find_or_last(|(_, ibis)| self.get(*ibis, j) >= height).map(|(d, _)| d + 1).unwrap_or(0)
-            * (i+1..self.height()).enumerate().find_or_last(|(_, ibis)| self.get(*ibis, j) >= height).map(|(d, _)| d + 1).unwrap_or(0)
-            * (0..=j-1).rev().enumerate().find_or_last(|(_, jbis)| self.get(i, *jbis) >= height).map(|(d, _)| d + 1).unwrap_or(0)
-            * (j+1..self.width()).enumerate().find_or_last(|(_, jbis)| self.get(i, *jbis) >= height).map(|(d, _)| d + 1).unwrap_or(0)
+    pub fn points_left(&self, (i, j): Point) -> impl Iterator<Item = Point> {
+        if j == 0 {
+            1..=0
+        } else {
+            0..=j-1
+        }.rev().map(move |jbis| (i, jbis))
+    }
+
+    pub fn points_right(&self, (i, j): Point) -> impl Iterator<Item = Point> {
+        (j+1..self.width()).map(move |jbis| (i, jbis))
+    }
+
+    pub fn is_visible(&self, point: Point) -> bool {
+        let height = self.get(point);
+        let smaller = |point| self.get(point) < height;
+
+        self.points_up(point).all(smaller)
+            || self.points_down(point).all(smaller)
+            || self.points_left(point).all(smaller)
+            || self.points_right(point).all(smaller)
+    }
+
+    pub fn scenic_score(&self, point: Point) -> usize {
+        let height = self.get(point);
+
+        self.viewing_distance(self.points_up(point), height)
+            * self.viewing_distance(self.points_down(point), height)
+            * self.viewing_distance(self.points_left(point), height)
+            * self.viewing_distance(self.points_right(point), height)
+    }
+
+    fn viewing_distance(&self, points: impl Iterator<Item = Point>, height: u8) -> usize {
+        points.enumerate().find_or_last(|(_, point)| self.get(*point) >= height).map(|(d, _)| d + 1).unwrap_or(0)
     }
 }
 
@@ -57,32 +88,12 @@ fn parser(input: &str) -> IResult<&str, Grid> {
     ), |trees| Grid { trees })(input)
 }
 
-fn solve_part1(input: &Grid) -> u32 {
-    let mut count = 0;
-
-    for i in 0..input.height() {
-        for j in 0..input.width() {
-            if input.is_visible(i, j) {
-                count += 1;
-            }
-        }
-    }
-
-    count
+fn solve_part1(input: &Grid) -> usize {
+    input.points().filter(|point| input.is_visible(*point)).count()
 }
 
 fn solve_part2(input: &Grid) -> usize {
-    let mut distance = 0;
-
-    for i in 0..input.height() {
-        for j in 0..input.width() {
-            if input.viewing_distance(i, j) >= distance {
-                distance = input.viewing_distance(i, j);
-            }
-        }
-    }
-
-    distance
+    input.points().map(|point| input.scenic_score(point)).max().unwrap()
 }
 
 fn main() {
@@ -123,9 +134,9 @@ mod tests {
             ],
         };
 
-        assert_eq!(grid.is_visible(0, 0), true, "(0, 0)");
-        assert_eq!(grid.is_visible(1, 1), true, "(1, 1)");
-        assert_eq!(grid.is_visible(2, 2), false, "(2, 2)");
+        assert_eq!(grid.is_visible((0, 0)), true, "(0, 0)");
+        assert_eq!(grid.is_visible((1, 1)), true, "(1, 1)");
+        assert_eq!(grid.is_visible((2, 2)), false, "(2, 2)");
     }
 
     #[test]
@@ -142,7 +153,7 @@ mod tests {
     }
 
     #[test]
-    fn test_viewing_distance() {
+    fn test_scenic_score() {
         let grid = Grid {
             trees: vec![
                 vec![3, 0, 3, 7, 3],
@@ -153,7 +164,7 @@ mod tests {
             ],
         };
 
-        assert_eq!(grid.viewing_distance(1, 2), 4, "(1, 2)");
+        assert_eq!(grid.scenic_score((1, 2)), 4, "(1, 2)");
     }
 
     #[test]
