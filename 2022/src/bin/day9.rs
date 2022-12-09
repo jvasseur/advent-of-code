@@ -1,7 +1,6 @@
 #![feature(int_abs_diff)]
 
 use advent_of_code_2022::{read, parse};
-use itertools::Itertools;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::u32;
@@ -49,74 +48,14 @@ fn parser(input: &str) -> IResult<&str, Vec<Move>> {
 }
 
 #[derive(Debug, PartialEq)]
-struct Rope {
-    head: (i32, i32),
-    tail: (i32, i32),
+struct Rope<const N: usize> {
+    knots: [(i32, i32);N],
 }
 
-impl Rope {
+impl<const N: usize> Rope<N> {
     pub fn new() -> Self {
         Rope {
-            head: (0, 0),
-            tail: (0, 0),
-        }
-    }
-
-    pub fn move_head(&mut self, direction: Direction) {
-        self.head = match direction {
-            Direction::Left => (self.head.0 - 1, self.head.1),
-            Direction::Right => (self.head.0 + 1, self.head.1),
-            Direction::Up => (self.head.0, self.head.1 + 1),
-            Direction::Down => (self.head.0, self.head.1 - 1),
-        };
-
-        if self.head.0.abs_diff(self.tail.0) <= 1 && self.head.1.abs_diff(self.tail.1) <= 1 {
-            return;
-        }
-
-        if self.head.0 == self.tail.0 {
-            if self.head.1 > self.tail.1 {
-                self.tail = (self.tail.0, self.tail.1 + 1);
-            } else {
-                self.tail = (self.tail.0, self.tail.1 - 1);
-            }
-
-            return;
-        }
-
-        if self.head.1 == self.tail.1 {
-            if self.head.0 > self.tail.0 {
-                self.tail = (self.tail.0 + 1, self.tail.1);
-            } else {
-                self.tail = (self.tail.0 - 1, self.tail.1);
-            }
-
-            return;
-        }
-
-        if self.head.1 > self.tail.1 {
-            self.tail = (self.tail.0, self.tail.1 + 1);
-        } else {
-            self.tail = (self.tail.0, self.tail.1 - 1);
-        }
-
-        if self.head.0 > self.tail.0 {
-            self.tail = (self.tail.0 + 1, self.tail.1);
-        } else {
-            self.tail = (self.tail.0 - 1, self.tail.1);
-        }
-    }
-}
-
-#[derive(Debug, PartialEq)]
-struct RopeV2 {
-    knots: [(i32, i32);10],
-}
-
-impl RopeV2 {
-    pub fn new() -> Self {
-        RopeV2 {
-            knots: [(0, 0); 10],
+            knots: [(0, 0); N],
         }
     }
 
@@ -128,7 +67,7 @@ impl RopeV2 {
             Direction::Down => (self.knots[0].0, self.knots[0].1 - 1),
         };
 
-        for i in 1..10 {
+        for i in 1..N {
             if self.knots[i - 1].0.abs_diff(self.knots[i].0) <= 1 && self.knots[i - 1].1.abs_diff(self.knots[i].1) <= 1 {
                 continue;
             }
@@ -168,39 +107,29 @@ impl RopeV2 {
     }
 }
 
-
-fn solve_part1(input: &[Move]) -> usize {
+fn tail_positions<const N: usize>(moves: &[Move]) -> usize {
     let mut positions = HashSet::new();
-    let mut rope = Rope::new();
+    let mut rope: Rope<N> = Rope::new();
 
-    positions.insert(rope.tail);
+    positions.insert(rope.knots[N - 1]);
 
-    for mv in input {
+    for mv in moves {
         for _ in 0..mv.steps {
             rope.move_head(mv.direction);
 
-            positions.insert(rope.tail);
+            positions.insert(rope.knots[N - 1]);
         }
     }
 
     positions.len()
 }
 
+fn solve_part1(input: &[Move]) -> usize {
+    tail_positions::<2>(input)
+}
+
 fn solve_part2(input: &[Move]) -> usize {
-    let mut positions = HashSet::new();
-    let mut rope = RopeV2::new();
-
-    positions.insert(rope.knots[9]);
-
-    for mv in input {
-        for _ in 0..mv.steps {
-            rope.move_head(mv.direction);
-
-            positions.insert(rope.knots[9]);
-        }
-    }
-
-    positions.len()
+    tail_positions::<10>(input)
 }
 
 fn main() {
@@ -232,63 +161,63 @@ mod tests {
 
     #[test]
     fn test_move_head_right() {
-        let mut rope = Rope::new();
+        let mut rope: Rope<2> = Rope::new();
 
         rope.move_head(Direction::Right);
 
-        assert_eq!(rope.head, (1, 0));
-        assert_eq!(rope.tail, (0, 0));
+        assert_eq!(rope.knots[0], (1, 0));
+        assert_eq!(rope.knots[1], (0, 0));
 
         rope.move_head(Direction::Right);
 
-        assert_eq!(rope.head, (2, 0));
-        assert_eq!(rope.tail, (1, 0));
+        assert_eq!(rope.knots[0], (2, 0));
+        assert_eq!(rope.knots[1], (1, 0));
     }
 
     #[test]
     fn test_move_head_up() {
-        let mut rope = Rope::new();
+        let mut rope: Rope<2> = Rope::new();
 
         rope.move_head(Direction::Up);
 
-        assert_eq!(rope.head, (0, 1));
-        assert_eq!(rope.tail, (0, 0));
+        assert_eq!(rope.knots[0], (0, 1));
+        assert_eq!(rope.knots[1], (0, 0));
 
         rope.move_head(Direction::Up);
 
-        assert_eq!(rope.head, (0, 2));
-        assert_eq!(rope.tail, (0, 1));
+        assert_eq!(rope.knots[0], (0, 2));
+        assert_eq!(rope.knots[1], (0, 1));
     }
 
     #[test]
     fn test_move_head_down() {
-        let mut rope = Rope::new();
+        let mut rope: Rope<2> = Rope::new();
 
         rope.move_head(Direction::Down);
 
-        assert_eq!(rope.head, (0, -1));
-        assert_eq!(rope.tail, (0, 0));
+        assert_eq!(rope.knots[0], (0, -1));
+        assert_eq!(rope.knots[1], (0, 0));
 
         rope.move_head(Direction::Down);
 
-        assert_eq!(rope.head, (0, -2));
-        assert_eq!(rope.tail, (0, -1));
+        assert_eq!(rope.knots[0], (0, -2));
+        assert_eq!(rope.knots[1], (0, -1));
     }
 
     #[test]
     fn test_move_head_diag() {
-        let mut rope = Rope::new();
+        let mut rope: Rope<2> = Rope::new();
 
         rope.move_head(Direction::Right);
         rope.move_head(Direction::Up);
 
-        assert_eq!(rope.head, (1, 1));
-        assert_eq!(rope.tail, (0, 0));
+        assert_eq!(rope.knots[0], (1, 1));
+        assert_eq!(rope.knots[1], (0, 0));
 
         rope.move_head(Direction::Up);
 
-        assert_eq!(rope.head, (1, 2));
-        assert_eq!(rope.tail, (1, 1));
+        assert_eq!(rope.knots[0], (1, 2));
+        assert_eq!(rope.knots[1], (1, 1));
     }
 
     #[test]
