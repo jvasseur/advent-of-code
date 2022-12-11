@@ -4,7 +4,7 @@ use advent_of_code_2022::{read, parse};
 use itertools::Itertools;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
-use nom::character::complete::{u8, u32};
+use nom::character::complete::{u8, u64};
 use nom::combinator::{map, value};
 use nom::IResult;
 use nom::multi::separated_list1;
@@ -14,9 +14,9 @@ use std::collections::VecDeque;
 
 #[derive(Clone, Debug, PartialEq)]
 struct Monkey {
-    items: VecDeque<u32>,
+    items: VecDeque<u64>,
     operation: Operation,
-    test_divisible_by: u32,
+    test_divisible_by: u64,
     test_on_true: usize,
     test_on_false: usize,
 }
@@ -28,7 +28,7 @@ struct Operation {
 }
 
 impl Operation {
-    pub fn apply(&self, left: u32) -> u32 {
+    pub fn apply(&self, left: u64) -> u64 {
         let right = match self.operand {
             Operand::Old => left,
             Operand::Fixed(value) => value,
@@ -50,7 +50,7 @@ enum Operator {
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Operand {
     Old,
-    Fixed(u32),
+    Fixed(u64),
 }
 
 fn parser(input: &str) -> IResult<&str, Vec<Monkey>> {
@@ -60,7 +60,7 @@ fn parser(input: &str) -> IResult<&str, Vec<Monkey>> {
             tag("Monkey "),
             u8,
             tag(":\n  Starting items: "),
-            separated_list1(tag(", "), u32),
+            separated_list1(tag(", "), u64),
             tag("\n  Operation: new = old "),
             alt((
                 value(Operator::Add, tag("+")),
@@ -69,10 +69,10 @@ fn parser(input: &str) -> IResult<&str, Vec<Monkey>> {
             tag(" "),
             alt((
                 map(tag("old"), |_| Operand::Old),
-                map(u32, |v| Operand::Fixed(v)),
+                map(u64, |v| Operand::Fixed(v)),
             )),
             tag("\n  Test: divisible by "),
-            u32,
+            u64,
             tag("\n    If true: throw to monkey "),
             map(u8, |v| v as usize),
             tag("\n    If false: throw to monkey "),
@@ -119,11 +119,12 @@ fn solve_part1(input: &[Monkey]) -> u32 {
     throws.iter().sorted().rev().take(2).product()
 }
 
-fn solve_part2(input: &[Monkey]) -> u32 {
-    let mut throws: Vec<u32> = input.iter().map(|_| 0).collect();
+fn solve_part2(input: &[Monkey]) -> u64 {
+    let mut throws: Vec<u64> = input.iter().map(|_| 0).collect();
     let monkeys: Vec<RefCell<Monkey>> = input.iter().map(|monkey| RefCell::new(monkey.clone())).collect();
+    let remnant: u64 = input.iter().map(|monkey| monkey.test_divisible_by).product();
 
-    for _ in 0..20 {
+    for _ in 0..10_000 {
         for (i, monkey) in monkeys.iter().enumerate() {
             let operation = monkey.borrow().operation;
             let test_divisible_by = monkey.borrow().test_divisible_by;
@@ -132,6 +133,7 @@ fn solve_part2(input: &[Monkey]) -> u32 {
 
             while let Some(item) = monkey.borrow_mut().items.pop_front() {
                 let new_wory = operation.apply(item);
+                let new_wory = new_wory % remnant;
                 let test = new_wory.rem_euclid(test_divisible_by) == 0;
 
                 let monkey_to_throw = if test { test_on_true } else { test_on_false };
@@ -283,6 +285,46 @@ Monkey 3:
     #[test]
     fn test_solve_part2() {
         assert_eq!(solve_part2(&vec![
-        ]), 0);
+            Monkey {
+                items: VecDeque::from(vec![79, 98]),
+                operation: Operation {
+                    operator: Operator::Times,
+                    operand: Operand::Fixed(19),
+                },
+                test_divisible_by: 23,
+                test_on_true: 2,
+                test_on_false: 3,
+            },
+            Monkey {
+                items: VecDeque::from(vec![54, 65, 75, 74]),
+                operation: Operation {
+                    operator: Operator::Add,
+                    operand: Operand::Fixed(6),
+                },
+                test_divisible_by: 19,
+                test_on_true: 2,
+                test_on_false: 0,
+            },
+            Monkey {
+                items: VecDeque::from(vec![79, 60, 97]),
+                operation: Operation {
+                    operator: Operator::Times,
+                    operand: Operand::Old,
+                },
+                test_divisible_by: 13,
+                test_on_true: 1,
+                test_on_false: 3,
+            },
+            Monkey {
+                items: VecDeque::from(vec![74]),
+                operation: Operation {
+                    operator: Operator::Add,
+                    operand: Operand::Fixed(3),
+                },
+                test_divisible_by: 17,
+                test_on_true: 0,
+                test_on_false: 1,
+            },
+        ]), 2713310158);
     }
 }
