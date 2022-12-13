@@ -1,5 +1,3 @@
-#![feature(int_abs_diff)]
-
 use advent_of_code_2022::{read, parse};
 use itertools::Itertools;
 use nom::branch::alt;
@@ -41,12 +39,7 @@ fn compare_lists(a: &Vec<Packet>, b: &Vec<Packet>) -> Ordering {
 
 impl PartialOrd for Packet {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match (self, other) {
-            (Packet::Integer(a), Packet::Integer(b)) => Some(a.cmp(b)),
-            (Packet::List(a), Packet::List(b)) => Some(compare_lists(a, b)),
-            (Packet::Integer(a), Packet::List(b)) => Some(compare_lists(&vec![Packet::Integer(*a)], b)),
-            (Packet::List(a), Packet::Integer(b)) => Some(compare_lists(a, &vec![Packet::Integer(*b)])),
-        }
+        Some(self.cmp(other))
     }
 }
 
