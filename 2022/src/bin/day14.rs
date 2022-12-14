@@ -42,6 +42,22 @@ struct Grid {
 }
 
 impl Grid {
+    pub fn new(x_min: usize, x_max: usize, y_min: usize, y_max: usize) -> Self {
+        let mut col_prototype = Vec::new();
+        col_prototype.resize(y_max - y_min + 1, Space::Air);
+
+        let mut spaces = Vec::new();
+        spaces.resize(x_max - x_min + 1, col_prototype);
+
+        Grid {
+            x_min,
+            x_max,
+            y_min,
+            y_max,
+            spaces,
+        }
+    }
+
     pub fn get(&self, (x, y): Point) -> Space {
         if x < self.x_min || x > self.x_max || y < self.y_min || y > self.y_max {
             Space::Air
@@ -53,15 +69,34 @@ impl Grid {
     pub fn set(&mut self, (x, y): Point, value: Space) {
         self.spaces[x - self.x_min][y - self.y_min] = value;
     }
+
+    pub fn resize(&self, x_min: usize, x_max: usize, y_min: usize, y_max: usize) -> Self {
+        let mut new_grid = Grid::new(x_min, x_max, y_min, y_max);
+
+        for x in x_min..=x_max {
+            for y in y_min..=y_max {
+                new_grid.set((x, y), self.get((x, y)));
+            }
+        }
+
+        new_grid
+    }
 }
 
-impl ToString for Grid {
-    fn to_string(&self) -> String {
-        (self.y_min..=self.y_max).map(|y| (self.x_min..=self.x_max).map(|x| match self.get((x, y)) {
-            Space::Air => '.',
-            Space::Sand => 'o',
-            Space::Rock => '#',
-        }).collect::<String>()).join("\n")
+impl std::fmt::Display for Grid {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        for y in self.y_min..=self.y_max {
+            for x in self.x_min..=self.x_max {
+                write!(f, "{}", match self.get((x, y)) {
+                    Space::Air => '.',
+                    Space::Sand => 'o',
+                    Space::Rock => '#',
+                })?
+            }
+            write!(f, "\n")?
+        }
+
+        Ok(())
     }
 }
 
@@ -71,19 +106,7 @@ impl From<&Input> for Grid {
         let y_min = 0;
         let y_max = input.iter().flatten().map(|(_, y)| y).max().unwrap();
 
-        let mut col_prototype = Vec::new();
-        col_prototype.resize(y_max - y_min + 1, Space::Air);
-
-        let mut spaces = Vec::new();
-        spaces.resize(x_max - x_min + 1, col_prototype);
-
-        let mut grid = Grid {
-            x_min: *x_min,
-            x_max: *x_max,
-            y_min,
-            y_max: *y_max,
-            spaces,
-        };
+        let mut grid = Grid::new(*x_min, *x_max, y_min, *y_max);
 
         for rock in input {
             for (start, end) in rock.iter().tuple_windows() {
@@ -155,7 +178,50 @@ fn solve_part1(input: &Input) -> usize {
 }
 
 fn solve_part2(input: &Input) -> usize {
-    0
+    let mut grid = Grid::from(input);
+
+    let y_max = grid.y_max + 2;
+
+    grid = grid.resize(500 - y_max, 500 + y_max, 0, y_max);
+
+    for x in grid.x_min..=grid.x_max {
+        grid.set((x, y_max), Space::Rock);
+    }
+
+    let mut sand_count = 0;
+
+    loop {
+        let mut sand: Point = (500, 0);
+
+        loop {
+            if grid.get((sand.0, sand.1 + 1)) == Space::Air {
+                sand = (sand.0, sand.1 + 1);
+
+                continue;
+            }
+
+            if grid.get((sand.0 - 1, sand.1 + 1)) == Space::Air {
+                sand = (sand.0 - 1, sand.1 + 1);
+
+                continue;
+            }
+
+            if grid.get((sand.0 + 1, sand.1 + 1)) == Space::Air {
+                sand = (sand.0 + 1, sand.1 + 1);
+
+                continue;
+            }
+
+            grid.set(sand, Space::Sand);
+            sand_count += 1;
+
+            if sand == (500, 0) {
+                return sand_count;
+            }
+
+            break;
+        }
+    }
 }
 
 fn main() {
@@ -192,6 +258,6 @@ mod tests {
 
     #[test]
     fn test_solve_part2() {
-        assert_eq!(solve_part2(&parsed_input()), 0);
+        assert_eq!(solve_part2(&parsed_input()), 93);
     }
 }
