@@ -55,8 +55,8 @@ struct World {
     distances: HashMap<String, HashMap<String, u8>>,
 }
 
-impl<'a> From<&Input<'a>> for World {
-    fn from(input: &Input) -> Self {
+impl<'a> From<Input<'a>> for World {
+    fn from(input: Input) -> Self {
         let valves: HashMap<String, u8> = input
             .iter()
             .filter(|(_, valve)| valve.flow_rate != 0)
@@ -114,59 +114,50 @@ impl<'a> From<&Input<'a>> for World {
     }
 }
 
-fn compute_flow(world: &World, open_valves: &HashSet<&str>, reamining_time: u8, valve_id: &str) -> u32 {
+fn compute_flow(world: &World, valves_to_check: &HashSet<&str>, reamining_time: u8, valve_id: &str) -> u32 {
     if reamining_time == 0 {
         return 0;
     }
 
     let mut reamining_time = reamining_time;
     let mut flow: u32 = 0;
-    let mut open_valves = open_valves.clone();
+    let mut valves_to_check = valves_to_check.clone();
 
     if let Some(flow_rate) = world.valves.get(valve_id) {
-        if !open_valves.contains(valve_id) {
+        if valves_to_check.contains(valve_id) {
             reamining_time -= 1;
 
             flow += *flow_rate as u32 * reamining_time as u32;
 
-            open_valves.insert(valve_id);
+            valves_to_check.remove(valve_id);
         }
     }
 
-    flow += world
-        .distances
-        .get(valve_id)
-        .unwrap()
+    flow += valves_to_check
         .iter()
-        .filter(|(to, distance)| {
-            let to: String = (*to).to_owned();
+        .filter_map(|to| {
+            let distance = *world.distances.get(valve_id).unwrap().get(*to).unwrap();
 
-            if open_valves.contains(&to as &str) {
-                return false;
+            if distance > reamining_time {
+                return None;
             }
 
-            if **distance > reamining_time {
-                return false;
-            }
-
-            return true;
+            Some(compute_flow(world, &valves_to_check, reamining_time - distance, to))
         })
-        .map(|(id, distance)| compute_flow(world, &open_valves, reamining_time - distance, id))
         .max()
         .unwrap_or(0);
 
     flow
 }
 
-fn solve_part1(input: &Input) -> u32 {
-    let world = World::from(input);
+fn solve_part1(world: &World) -> u32 {
+    let valves: Vec<String> = world.valves.keys().cloned().collect();
+    let valves_set: HashSet<&str> = valves.iter().map(|s| &s as &str).collect();
 
-    compute_flow(&world, &HashSet::new(), 30, "AA")
+    compute_flow(&world, &valves_set, 30, "AA")
 }
 
-fn solve_part2(input: &Input) -> u32 {
-    let world = World::from(input);
-
+fn solve_part2(world: &World) -> u32 {
     let valves: Vec<String> = world.valves.keys().cloned().collect();
     let valves_set: HashSet<&str> = valves.iter().map(|s| &s as &str).collect();
 
@@ -190,9 +181,10 @@ fn main() {
     let input = read(16);
 
     let parsed = parse(parser, &input);
+    let world = World::from(parsed);
 
-    println!("{}", solve_part1(&parsed));
-    println!("{}", solve_part2(&parsed));
+    println!("{}", solve_part1(&world));
+    println!("{}", solve_part2(&world));
 }
 
 #[cfg(test)]
@@ -233,11 +225,11 @@ Valve JJ has flow rate=21; tunnel leads to valve II
 
     #[test]
     fn test_solve_part1() {
-        assert_eq!(solve_part1(&parsed_input()), 1651);
+        assert_eq!(solve_part1(&World::from(parsed_input())), 1651);
     }
 
     #[test]
     fn test_solve_part2() {
-        assert_eq!(solve_part2(&parsed_input()), 1707);
+        assert_eq!(solve_part2(&World::from(parsed_input())), 1707);
     }
 }
