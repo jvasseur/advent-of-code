@@ -1,6 +1,7 @@
 #![feature(int_abs_diff)]
 
 use advent_of_code_2022::{read, parse};
+use itertools::Itertools;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{alpha1, u8};
@@ -39,10 +40,7 @@ fn valve_parser(input: &str) -> IResult<&str, (&str, Valve)> {
         preceded(tag("tunnels lead to valves "), separated_list1(tag(", "), alpha1)),
     ))(input)?;
 
-    Ok((input, (id, Valve {
-        flow_rate,
-        to,
-    })))
+    Ok((input, (id, Valve::new(flow_rate, to))))
 }
 
 fn parser(input: &str) -> IResult<&str, Input> {
@@ -61,6 +59,7 @@ impl<'a> From<&Input<'a>> for World {
     fn from(input: &Input) -> Self {
         let valves: HashMap<String, u8> = input
             .iter()
+            .filter(|(_, valve)| valve.flow_rate != 0)
             .map(|(id, valve)| ((*id).to_owned(), valve.flow_rate))
             .collect();
 
@@ -94,6 +93,20 @@ impl<'a> From<&Input<'a>> for World {
             }
         }
 
+        for i in nodes.iter() {
+            if *i != "AA" && valves.get(i) == None {
+                distances.remove(i);
+            } else {
+                let distances_to = distances.get_mut(i).unwrap();
+
+                for j in nodes.iter() {
+                    if i==j || valves.get(j) == None {
+                        distances_to.remove(j);
+                    }
+                }
+            }
+        }
+
         Self {
             valves,
             distances,
@@ -110,14 +123,14 @@ fn compute_flow(world: &World, open_valves: &HashSet<&str>, reamining_time: u8, 
     let mut flow: u32 = 0;
     let mut open_valves = open_valves.clone();
 
-    let flow_rate = *world.valves.get(valve_id).unwrap();
+    if let Some(flow_rate) = world.valves.get(valve_id) {
+        if !open_valves.contains(valve_id) {
+            reamining_time -= 1;
 
-    if flow_rate != 0 && !open_valves.contains(valve_id) {
-        reamining_time -= 1;
+            flow += *flow_rate as u32 * reamining_time as u32;
 
-        flow += flow_rate as u32 * reamining_time as u32;
-
-        open_valves.insert(valve_id);
+            open_valves.insert(valve_id);
+        }
     }
 
     flow += world
@@ -127,14 +140,6 @@ fn compute_flow(world: &World, open_valves: &HashSet<&str>, reamining_time: u8, 
         .iter()
         .filter(|(to, distance)| {
             let to: String = (*to).to_owned();
-
-            if to == valve_id {
-                return false;
-            }
-
-            if *world.valves.get(&to).unwrap() == 0 {
-                return false;
-            }
 
             if open_valves.contains(&to as &str) {
                 return false;
@@ -160,7 +165,25 @@ fn solve_part1(input: &Input) -> u32 {
 }
 
 fn solve_part2(input: &Input) -> u32 {
-    0
+    let world = World::from(input);
+
+    let valves: Vec<String> = world.valves.keys().cloned().collect();
+    let valves_set: HashSet<&str> = valves.iter().map(|s| &s as &str).collect();
+
+    let mut best = 0;
+
+    for valves_for_me in valves.iter().powerset() {
+        let valves_for_me: HashSet<&str> = valves_for_me.iter().map(|s| &s as &str).collect();
+        let valves_for_elephant: HashSet<&str> = valves_set.difference(&valves_for_me).cloned().collect();
+
+        let current = compute_flow(&world, &valves_for_me, 26, "AA") + compute_flow(&world, &valves_for_elephant, 26, "AA");
+
+        if current > best {
+            best = current;
+        }
+    }
+
+    best
 }
 
 fn main() {
@@ -215,6 +238,6 @@ Valve JJ has flow rate=21; tunnel leads to valve II
 
     #[test]
     fn test_solve_part2() {
-        assert_eq!(solve_part2(&parsed_input()), 0);
+        assert_eq!(solve_part2(&parsed_input()), 1707);
     }
 }
