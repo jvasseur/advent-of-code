@@ -1,5 +1,3 @@
-#![feature(int_abs_diff)]
-
 use advent_of_code_2022::{read, parse};
 use nom::branch::alt;
 use nom::bytes::complete::tag;
