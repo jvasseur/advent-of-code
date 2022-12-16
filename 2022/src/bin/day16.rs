@@ -114,50 +114,39 @@ impl<'a> From<Input<'a>> for World {
     }
 }
 
-fn compute_flow(world: &World, valves_to_check: &HashSet<&str>, reamining_time: u8, valve_id: &str) -> u32 {
-    if reamining_time == 0 {
-        return 0;
-    }
-
-    let mut reamining_time = reamining_time;
-    let mut flow: u32 = 0;
-    let mut valves_to_check = valves_to_check.clone();
-
-    if let Some(flow_rate) = world.valves.get(valve_id) {
-        if valves_to_check.contains(valve_id) {
-            reamining_time -= 1;
-
-            flow += *flow_rate as u32 * reamining_time as u32;
-
-            valves_to_check.remove(valve_id);
-        }
-    }
-
-    flow += valves_to_check
+fn compute_flow(world: &World, valves_to_check: &HashSet<&str>, remaining_time: u8, valve_id: &str) -> u16 {
+    valves_to_check
         .iter()
         .filter_map(|to| {
-            let distance = *world.distances.get(valve_id).unwrap().get(*to).unwrap();
+            let time_needed = *world.distances.get(valve_id).unwrap().get(*to).unwrap() + 1;
 
-            if distance > reamining_time {
+            if time_needed > remaining_time {
                 return None;
             }
 
-            Some(compute_flow(world, &valves_to_check, reamining_time - distance, to))
+            let remaining_time = remaining_time - time_needed;
+
+            let flow_rate = *world.valves.get(*to).unwrap();
+            let flow = flow_rate as u16 * remaining_time as u16;
+
+            let mut valves_to_check = valves_to_check.clone();
+
+            valves_to_check.remove(to);
+
+            Some(flow + compute_flow(world, &valves_to_check, remaining_time, to))
         })
         .max()
-        .unwrap_or(0);
-
-    flow
+        .unwrap_or(0)
 }
 
-fn solve_part1(world: &World) -> u32 {
+fn solve_part1(world: &World) -> u16 {
     let valves: Vec<String> = world.valves.keys().cloned().collect();
     let valves_set: HashSet<&str> = valves.iter().map(|s| &s as &str).collect();
 
     compute_flow(&world, &valves_set, 30, "AA")
 }
 
-fn solve_part2(world: &World) -> u32 {
+fn solve_part2(world: &World) -> u16 {
     let valves: Vec<String> = world.valves.keys().cloned().collect();
     let valves_set: HashSet<&str> = valves.iter().map(|s| &s as &str).collect();
 
