@@ -17,15 +17,16 @@ struct Card {
     id: u32,
     winning: HashSet<u32>,
     have: HashSet<u32>,
+    wins: u32,
 }
 
 impl Card {
     fn new(id: u32, winning: impl Into<HashSet<u32>>, have: impl Into<HashSet<u32>>) -> Self {
-        Self { id, winning: winning.into(), have: have.into() }
-    }
+        let winning = winning.into();
+        let have = have.into();
+        let wins = winning.intersection(&have).count() as u32;
 
-    fn wins(&self) -> u32 {
-        self.winning.intersection(&self.have).count() as u32
+        Self { id, winning, have, wins }
     }
 }
 
@@ -50,17 +51,17 @@ impl Parsable for Card {
         let (input, _) = space1(input)?;
         let (input, have) = separated_list1(space1, u32)(input)?;
 
-        Ok((input, Card {
+        Ok((input, Card::new(
             id,
-            winning: winning.into_iter().collect(),
-            have: have.into_iter().collect(),
-        }))
+            winning.into_iter().collect::<HashSet<u32>>(),
+            have.into_iter().collect::<HashSet<u32>>(),
+        )))
     }
 }
 
 fn solve_part1(input: &Input) -> u32 {
     input.cards.iter().map(|card| {
-        let wins = card.wins();
+        let wins = card.wins;
 
         if wins > 0 {
             2_u32.pow(wins - 1)
@@ -71,14 +72,14 @@ fn solve_part1(input: &Input) -> u32 {
 }
 
 fn solve_part2(input: &Input) -> u32 {
-    let mut cards: VecDeque<Card> = input.cards.iter().cloned().collect();
+    let mut cards: VecDeque<&Card> = input.cards.iter().collect();
     let mut count = input.cards.len() as u32;
 
     let max = input.cards.len() - 1;
 
     while let Some(card) = cards.pop_front() {
         let id = card.id;
-        let wins = card.wins();
+        let wins = card.wins;
 
         if wins == 0 {
             continue;
@@ -88,7 +89,7 @@ fn solve_part2(input: &Input) -> u32 {
 
         for card in cards_to_add {
             count += 1;
-            cards.push_back(card.clone());
+            cards.push_back(&card);
         };
     }
 
