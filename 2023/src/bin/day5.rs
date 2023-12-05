@@ -114,10 +114,6 @@ impl Range {
         Self { destination_start, source_start, range }
     }
 
-    fn destination(&self) -> RangeInclusive<u64> {
-        self.destination_start..=self.source_start + self.range - 1
-    }
-
     fn source(&self) -> RangeInclusive<u64> {
         self.source_start..=self.source_start + self.range - 1
     }
