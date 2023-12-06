@@ -34,21 +34,14 @@ impl Race {
         Race { time, record }
     }
 
-    fn distance(&self, hold_time: u64) -> u64 {
-        let speed = hold_time;
-        let move_time = self.time - hold_time;
-
-        speed * move_time
-    }
-
     fn winnable_starts(&self) -> u64 {
-        let first = (1..self.time)
-            .find(|&hold_time| self.distance(hold_time) > self.record)
-            .unwrap();
+        let delta = self.time * self.time - 4 * self.record;
+        let delta_sqrt = (delta as f64).sqrt();
+        let root_1 = ((self.time as f64) - delta_sqrt) / 2_f64;
+        let root_2 = ((self.time as f64) + delta_sqrt) / 2_f64;
 
-        let last = (1..self.time).rev()
-            .find(|&hold_time| self.distance(hold_time) > self.record)
-            .unwrap();
+        let first = (root_1 + 1_f64).floor() as u64;
+        let last = (root_2 - 1_f64).ceil() as u64;
 
         last - first + 1
     }
