@@ -40,6 +40,18 @@ impl Race {
 
         speed * move_time
     }
+
+    fn winnable_starts(&self) -> u64 {
+        let first = (1..self.time)
+            .find(|&hold_time| self.distance(hold_time) > self.record)
+            .unwrap();
+
+        let last = (1..self.time).rev()
+            .find(|&hold_time| self.distance(hold_time) > self.record)
+            .unwrap();
+
+        last - first + 1
+    }
 }
 
 impl Parsable for Input {
@@ -60,27 +72,14 @@ impl Parsable for Input {
     }
 }
 
-fn solve_part1(input: &Input) -> usize {
+fn solve_part1(input: &Input) -> u64 {
     input.races.iter()
-        .map(|race| (1..race.time)
-            .filter(|&hold_time| race.distance(hold_time) > race.record)
-            .count()
-        )
+        .map(|race| race.winnable_starts())
         .product()
 }
 
 fn solve_part2(input: &Input) -> u64 {
-    let race = input.combined_race();
-
-    let first = (1..race.time)
-        .find(|&hold_time| race.distance(hold_time) > race.record)
-        .unwrap();
-
-    let last = (1..race.time).rev()
-        .find(|&hold_time| race.distance(hold_time) > race.record)
-        .unwrap();
-
-    last - first + 1
+    input.combined_race().winnable_starts()
 }
 
 fn main() {
