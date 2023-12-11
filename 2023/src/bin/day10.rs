@@ -1,4 +1,5 @@
 use advent_of_code_2023::{read, Parsable};
+use advent_of_code_2023::util::{Grid, Point};
 use itertools::Itertools;
 use nom::bytes::complete::tag;
 use nom::IResult;
@@ -56,12 +57,12 @@ enum Pipe {
 impl Pipe {
     fn connections(&self, point: &Point) -> [Point; 2] {
         match self {
-            Pipe::NS => [Point { line: point.line - 1, column: point.column }, Point { line: point.line + 1, column: point.column }],
-            Pipe::EW => [Point { line: point.line, column: point.column + 1 }, Point { line: point.line, column: point.column - 1 }],
-            Pipe::NE => [Point { line: point.line - 1, column: point.column }, Point { line: point.line, column: point.column + 1 }],
-            Pipe::NW => [Point { line: point.line - 1, column: point.column }, Point { line: point.line, column: point.column - 1 }],
-            Pipe::SW => [Point { line: point.line + 1, column: point.column }, Point { line: point.line, column: point.column - 1 }],
-            Pipe::SE => [Point { line: point.line + 1, column: point.column }, Point { line: point.line, column: point.column + 1 }],
+            Pipe::NS => [Point { row: point.row - 1, col: point.col }, Point { row: point.row + 1, col: point.col }],
+            Pipe::EW => [Point { row: point.row, col: point.col + 1 }, Point { row: point.row, col: point.col - 1 }],
+            Pipe::NE => [Point { row: point.row - 1, col: point.col }, Point { row: point.row, col: point.col + 1 }],
+            Pipe::NW => [Point { row: point.row - 1, col: point.col }, Point { row: point.row, col: point.col - 1 }],
+            Pipe::SW => [Point { row: point.row + 1, col: point.col }, Point { row: point.row, col: point.col - 1 }],
+            Pipe::SE => [Point { row: point.row + 1, col: point.col }, Point { row: point.row, col: point.col + 1 }],
         }
     }
 }
@@ -74,7 +75,7 @@ struct Map {
 
 impl Map {
     fn get(&self, point: &Point) -> Option<Pipe> {
-        self.lines[point.line][point.column]
+        self.lines[point.row][point.col]
     }
 
     fn connections(&self, point: &Point) -> Option<[Point; 2]> {
@@ -89,14 +90,14 @@ impl From<&Input> for Map {
         for line in 0..value.lines.len() {
             for column in 0..value.lines[line].len() {
                 if value.lines[line][column] == Item::Start {
-                    start = Some(Point { line, column });
+                    start = Some(Point { row: line, col: column });
                 }
             }
         }
 
         let start = start.unwrap();
 
-        let north = match value.lines[start.line - 1][start.column] {
+        let north = match value.lines[start.row - 1][start.col] {
             Item::Pipe(pipe) => match pipe {
                 Pipe::NS => true,
                 Pipe::EW => false,
@@ -110,7 +111,7 @@ impl From<&Input> for Map {
             Item::Start => panic!("Multiple start"),
         };
 
-        let south = match value.lines[start.line + 1][start.column] {
+        let south = match value.lines[start.row + 1][start.col] {
             Item::Pipe(pipe) => match pipe {
                 Pipe::NS => true,
                 Pipe::EW => false,
@@ -124,7 +125,7 @@ impl From<&Input> for Map {
             Item::Start => panic!("Multiple start"),
         };
 
-        let west = match value.lines[start.line][start.column - 1] {
+        let west = match value.lines[start.row][start.col - 1] {
             Item::Pipe(pipe) => match pipe {
                 Pipe::NS => false,
                 Pipe::EW => true,
@@ -138,7 +139,7 @@ impl From<&Input> for Map {
             Item::Start => panic!("Multiple start"),
         };
 
-        let east = match value.lines[start.line][start.column + 1] {
+        let east = match value.lines[start.row][start.col + 1] {
             Item::Pipe(pipe) => match pipe {
                 Pipe::NS => false,
                 Pipe::EW => true,
@@ -172,19 +173,13 @@ impl From<&Input> for Map {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-struct Point {
-    line: usize,
-    column: usize,
-}
-
 fn solve_part1(input: &Input) -> u32 {
     let map = Map::from(input);
 
-    let connections = map.connections(&map.start).unwrap();
+    let [connection, _] = map.connections(&map.start).unwrap();
 
     let mut previous = map.start;
-    let mut current = connections[0];
+    let mut current = connection;
     let mut steps = 1;
 
     while current != map.start {
@@ -202,18 +197,16 @@ fn solve_part1(input: &Input) -> u32 {
 fn solve_part2(input: &Input) -> u32 {
     let map = Map::from(input);
 
-    let mut enclosure: Vec<Vec<bool>> = map.lines.iter().map(|line| line.iter().map(|_| false).collect()).collect();
+    let mut points = Vec::new();
 
-    enclosure[map.start.line][map.start.column] = true;
-
-    let connections = map.connections(&map.start).unwrap();
+    let [connection, _] = map.connections(&map.start).unwrap();
 
     let mut previous = map.start;
-    let mut current = connections[0];
+    let mut current = connection;
+    points.push(map.start);
 
     while current != map.start {
-        enclosure[current.line][current.column] = true;
-
+        points.push(current);
         let connections = map.connections(&current).unwrap();
 
         let next = connections.into_iter().filter(|point| point != &previous).exactly_one().unwrap();
@@ -221,7 +214,114 @@ fn solve_part2(input: &Input) -> u32 {
         (previous, current) = (current, next);
     }
 
-    0
+    let mut enclosure = Grid::new_fill(map.lines.len() * 3, map.lines[0].len() * 3, false);
+
+    for point in points {
+        let pipe = map.get(&point).unwrap();
+
+        let center = Point {
+            row: point.row * 3 + 1,
+            col: point.col * 3 + 1,
+        };
+
+        enclosure.set(&center, true);
+
+        match pipe {
+            Pipe::NS => {
+                enclosure.set(&center.up(1), true);
+                enclosure.set(&center.down(1), true);
+            },
+            Pipe::EW => {
+                enclosure.set(&center.right(1), true);
+                enclosure.set(&center.left(1), true);
+            },
+            Pipe::NE => {
+                enclosure.set(&center.up(1), true);
+                enclosure.set(&center.right(1), true);
+            },
+            Pipe::NW => {
+                enclosure.set(&center.up(1), true);
+                enclosure.set(&center.left(1), true);
+            },
+            Pipe::SW => {
+                enclosure.set(&center.down(1), true);
+                enclosure.set(&center.left(1), true);
+            },
+            Pipe::SE => {
+                enclosure.set(&center.down(1), true);
+                enclosure.set(&center.right(1), true);
+            },
+        }
+    }
+
+    let mut outside = Grid::new_fill(map.lines.len() * 3, map.lines[0].len() * 3, false);
+
+    for col in 0..outside.cols() {
+        outside.set(&Point { row: 0, col }, true);
+        outside.set(&Point { row: outside.rows() - 1, col }, true);
+    }
+
+    for row in 0..outside.rows() {
+        outside.set(&Point { row, col: 0 }, true);
+        outside.set(&Point { row, col: outside.cols() - 1 }, true);
+    }
+
+    let mut changed = true;
+    while changed {
+        changed = false;
+
+        for row in 0..outside.rows() {
+            for col in 0..outside.cols() {
+                let point = Point { row, col };
+
+                if !outside.get(&point) {
+                    continue;
+                }
+
+                let mut points = Vec::new();
+
+                if point.row > 0 {
+                    points.push(point.up(1));
+                }
+
+                if point.row < outside.rows() - 1 {
+                    points.push(point.down(1));
+                }
+
+                if point.col > 0 {
+                    points.push(point.left(1));
+                }
+
+                if point.col < outside.cols() - 1 {
+                    points.push(point.right(1));
+                }
+
+                for point in points {
+                    if !enclosure.get(&point) && !outside.get(&point) {
+                        outside.set(&point, true);
+                        changed = true;
+                    }
+                }
+            }
+        }
+    }
+
+    let mut count = 0;
+
+    for row in 0..map.lines.len() {
+        for col in 0..map.lines[0].len() {
+            let center = Point {
+                row: row * 3 + 1,
+                col: col * 3 + 1,
+            };
+
+            if !enclosure.get(&center) && !outside.get(&center) {
+                count += 1;
+            }
+        }
+    }
+
+    count
 }
 
 fn main() {
@@ -268,6 +368,6 @@ mod tests {
 
     #[test]
     fn test_solve_part2() {
-        assert_eq!(solve_part2(&parsed_input()), 0);
+        assert_eq!(solve_part2(&parsed_input()), 1);
     }
 }
