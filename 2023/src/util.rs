@@ -51,7 +51,7 @@ impl<T> Grid<T> where T: Clone {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct Point {
     pub row: usize,
     pub col: usize,
