@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use advent_of_code_2023::{read, Parsable};
 use nom::bytes::complete::tag;
 use nom::character::complete::u32;
@@ -37,55 +38,86 @@ impl Row {
         Row { springs: springs.into(), groups: groups.into() }
     }
 
-    fn combinaisons(&self) -> Vec<Vec<Spring>> {
-        let mut combinaisons = vec![vec![]];
+    fn is_partial_group_valid(&self, group: &Vec<u32>) -> bool {
+        if group.len() > self.groups.len() {
+            return false;
+        }
 
-        for (row, value) in self.springs.iter().enumerate() {
+        if group[..] != self.groups[..group.len()] {
+            return false;
+        }
+
+        return true
+    }
+
+    fn compute_possible_groups_count(&self, springs: &Vec<Option<Spring>>) -> Vec<(Vec<u32>, usize)> {
+        let mut combinaisons = vec![(vec![], 0, 1)];
+
+        for value in springs {
             match value {
-                Some(spring) => {
-                    combinaisons.iter_mut().for_each(|combinaison| combinaison.push(*spring));
+                Some(Spring::Damaged) => {
+                    combinaisons.iter_mut().for_each(|combinaison| {
+                        combinaison.1 += 1;
+                    });
+                },
+                Some(Spring::Operational) => {
+                    combinaisons.iter_mut().for_each(|combinaison| {
+                        if combinaison.1 > 0 {
+                            combinaison.0.push(combinaison.1);
+                        }
+
+                        combinaison.1 = 0;
+                    });
                 },
                 None => {
                     let mut operational = combinaisons.clone();
                     let mut damaged = combinaisons.clone();
 
-                    operational.iter_mut().for_each(|combinaison| combinaison.push(Spring::Operational));
-                    damaged.iter_mut().for_each(|combinaison| combinaison.push(Spring::Damaged));
+                    operational.iter_mut().for_each(|combinaison| {
+                        if combinaison.1 > 0 {
+                            combinaison.0.push(combinaison.1);
+                        }
+
+                        combinaison.1 = 0;
+                    });
+                    damaged.iter_mut().for_each(|combinaison| {
+                        combinaison.1 += 1;
+                    });
 
                     combinaisons = [operational, damaged].concat();
                 },
             }
+
+            let mut map = HashMap::new();
+            for (group, current, count) in combinaisons {
+                if !self.is_partial_group_valid(&group) {
+                    continue;
+                }
+
+                *map.entry((group, current)).or_insert(0) += count;
+            }
+
+            combinaisons = map
+                .into_iter()
+                .map(|((group, current), count)| (group, current, count))
+                .collect()
         }
 
-        combinaisons = combinaisons.into_iter()
-            .filter(|combinaison| {
-                let mut groups = Vec::new();
-                let mut damaged = 0;
+        combinaisons.iter_mut().for_each(|combinaison| {
+            if combinaison.1 > 0 {
+                combinaison.0.push(combinaison.1);
+            }
+        });
 
-                for spring in combinaison {
-                    match spring {
-                        Spring::Operational => {
-                            if damaged > 0 {
-                                groups.push(damaged);
-                            }
+        combinaisons.into_iter().map(|(combinaison, _, count)| (combinaison, count)).collect()
+    }
 
-                            damaged = 0;
-                        },
-                        Spring::Damaged => {
-                            damaged += 1;
-                        },
-                    }
-                }
-
-                if damaged > 0 {
-                    groups.push(damaged);
-                }
-
-                groups == self.groups
-            })
-            .collect();
-
-        combinaisons
+    fn combinaisons_count(&self) -> usize {
+        self.compute_possible_groups_count(&self.springs)
+            .into_iter()
+            .filter(|(groups, _)| groups == &self.groups)
+            .map(|(_, count)| count)
+            .sum()
     }
 
     fn unfold(&self) -> Self {
@@ -125,11 +157,11 @@ impl Parsable for Spring {
 }
 
 fn solve_part1(input: &Input) -> usize {
-    input.rows.iter().map(|row| row.combinaisons().len()).sum()
+    input.rows.iter().map(|row| row.combinaisons_count()).sum()
 }
 
 fn solve_part2(input: &Input) -> usize {
-    input.rows.iter().map(|row| row.unfold().combinaisons().len()).sum()
+    input.rows.iter().map(|row| row.unfold().combinaisons_count()).sum()
 }
 
 fn main() {
