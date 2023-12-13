@@ -15,11 +15,27 @@ impl<T> Grid<T> {
     }
 
     pub fn get(&self, point: &Point) -> &T {
-        &self.data[point.row + point.col * self.cols]
+        &self.data[point.row * self.cols + point.col]
     }
 
     pub fn set(&mut self, point: &Point, value: T) {
-        self.data[point.row + point.col * self.cols] = value;
+        self.data[point.row * self.cols + point.col] = value;
+    }
+
+    pub fn get_row(&self, index: usize) -> Vec<&T> {
+        if index >= self.rows {
+            panic!("index >= self.rows");
+        }
+
+        (0..self.cols).map(|col| self.get(&Point { row: index, col })).collect()
+    }
+
+    pub fn get_col(&self, index: usize) -> Vec<&T> {
+        if index >= self.cols {
+            panic!("index >= self.cols");
+        }
+
+        (0..self.rows).map(|row| self.get(&Point { row, col: index })).collect()
     }
 }
 
@@ -42,6 +58,20 @@ impl<T> Grid<T> where T: Clone {
         let mut data = Vec::new();
 
         data.resize(rows * cols, value);
+
+        Grid {
+            rows,
+            cols,
+            data,
+        }
+    }
+}
+
+impl<T> From<Vec<Vec<T>>> for Grid<T> where T: Clone {
+    fn from(value: Vec<Vec<T>>) -> Self {
+        let rows = value.len();
+        let cols = value[0].len();
+        let data = value.concat();
 
         Grid {
             rows,
