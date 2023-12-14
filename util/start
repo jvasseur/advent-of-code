@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+cd $(dirname $(dirname $0))
+
+# Parse parameters
+YEAR=$1
+DAY=$2
+
+util/get-input "$YEAR" "$DAY"
+
+for TEMPLATE in $(cd "$YEAR/template/" && find . -name "*.template"); do
+    FILE=$(echo -n "$TEMPLATE" | sed --expression="s/{day}/$DAY/g" --expression="s/.template$//g")
+
+    sed --expression="s/{day}/$DAY/g" "$YEAR/template/$TEMPLATE" > "$YEAR/$FILE"
+done
