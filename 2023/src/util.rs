@@ -1,4 +1,4 @@
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Grid<T> {
     rows: usize,
     cols: usize,
