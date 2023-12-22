@@ -1,3 +1,5 @@
+pub mod dijkstra;
+
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Grid<T> {
     rows: usize,
