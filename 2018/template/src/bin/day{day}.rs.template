@@ -1,0 +1,60 @@
+use advent_of_code_2018::{read, Parsable};
+use nom::IResult;
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+struct Input {
+}
+
+impl Input {
+    fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Parsable for Input {
+    fn parser(input: &str) -> IResult<&str, Self> {
+        Ok((input, Input::new()))
+    }
+}
+
+fn solve_part1(input: &Input) -> usize {
+    0
+}
+
+fn solve_part2(input: &Input) -> usize {
+    0
+}
+
+fn main() {
+    let input = read({day});
+    let parsed = Input::parse(&input).unwrap();
+
+    println!("{}", solve_part1(&parsed));
+    println!("{}", solve_part2(&parsed));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const INPUT: &str = "";
+
+    fn parsed_input() -> Input {
+        Input::new()
+    }
+
+    #[test]
+    fn test_parser() {
+        assert_eq!(Input::parse(INPUT), Ok(parsed_input()));
+    }
+
+    #[test]
+    fn test_solve_part1() {
+        assert_eq!(solve_part1(&parsed_input()), 0);
+    }
+
+    #[test]
+    fn test_solve_part2() {
+        assert_eq!(solve_part2(&parsed_input()), 0);
+    }
+}
