@@ -1,6 +1,6 @@
 use nom::combinator::all_consuming;
 use nom::error::Error;
-use nom::{Finish, IResult, Parser};
+use nom::{Finish, IResult};
 use std::fs::read_to_string;
 
 pub fn read(day: u8) -> String {

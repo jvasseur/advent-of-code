@@ -50,8 +50,31 @@ fn solve_part1(input: &Input) -> usize {
         * input.boxes.iter().filter(|b| b.id.chars().counts().values().contains(&3)).count()
 }
 
-fn solve_part2(input: &Input) -> usize {
-    0
+fn solve_part2(input: &Input) -> String {
+    'main: for permutation in input.boxes.iter().cloned().permutations(2) {
+        let a = &permutation[0];
+        let b = &permutation[1];
+
+        let mut chars = Vec::new();
+        let mut diff = 0;
+        for (char_a, char_b) in a.id.chars().zip(b.id.chars()) {
+            if char_a == char_b {
+                chars.push(char_a);
+            } else {
+                diff += 1;
+            }
+
+            if diff > 1 {
+                continue 'main;
+            }
+        }
+
+        if diff == 1 {
+            return chars.into_iter().collect();
+        }
+    }
+
+    panic!()
 }
 
 fn main() {
@@ -99,6 +122,13 @@ ababab
 
     #[test]
     fn test_solve_part2() {
-        assert_eq!(solve_part2(&parsed_input()), 0);
+        assert_eq!(solve_part2(&Input::parse("abcde
+fghij
+klmno
+pqrst
+fguij
+axcye
+wvxyz
+").unwrap()), "fgij");
     }
 }
