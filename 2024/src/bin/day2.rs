@@ -33,7 +33,7 @@ impl Report {
         return false;
     }
 
-    fn are_levels_gradual(levels: &Vec<Level>) -> bool {
+    fn are_levels_gradual(levels: &[Level]) -> bool {
         if levels.iter().tuple_windows().all(|(&a, &b)| b > a && b <= a + 3) {
             return true;
         }
