@@ -1,4 +1,4 @@
-use advent_of_code_2023::{read, Parsable};
+use advent_of_code_2024::{read, Parsable};
 use nom::IResult;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
