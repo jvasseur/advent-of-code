@@ -1,4 +1,4 @@
-use advent_of_code_2024::{read, Parsable};
+use advent_of_code_2024::{parser::*, read};
 use nom::IResult;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -26,11 +26,10 @@ fn solve_part2(input: &Input) -> usize {
 }
 
 fn main() {
-    let input = read({day});
-    let parsed = Input::parse(&input).unwrap();
+    let input = parse(&read({day}).unwrap()).unwrap();
 
-    println!("{}", solve_part1(&parsed));
-    println!("{}", solve_part2(&parsed));
+    println!("{}", solve_part1(&input));
+    println!("{}", solve_part2(&input));
 }
 
 #[cfg(test)]
@@ -45,7 +44,7 @@ mod tests {
 
     #[test]
     fn test_parser() {
-        assert_eq!(Input::parse(INPUT), Ok(parsed_input()));
+        assert_eq!(parse::<Input>(INPUT), Ok(parsed_input()));
     }
 
     #[test]

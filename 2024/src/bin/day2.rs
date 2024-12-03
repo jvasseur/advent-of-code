@@ -1,7 +1,5 @@
-use advent_of_code_2024::{read, Parsable};
+use advent_of_code_2024::{parser::*, read};
 use itertools::Itertools;
-use nom::multi::many0;
-use nom::sequence::terminated;
 use nom::{bytes::complete::tag, multi::separated_list1, IResult};
 use nom::character::complete::u32;
 
@@ -67,7 +65,7 @@ impl Input {
 
 impl Parsable for Input {
     fn parser(input: &str) -> IResult<&str, Self> {
-        let (input, reports) = many0(terminated(Report::parser, tag("\n")))(input)?;
+        let (input, reports) = lines_parser(input)?;
 
         Ok((input, Input::new(reports)))
     }
@@ -82,11 +80,10 @@ fn solve_part2(input: &Input) -> usize {
 }
 
 fn main() {
-    let input = read(2);
-    let parsed = Input::parse(&input).unwrap();
+    let input = parse(&read(2).unwrap()).unwrap();
 
-    println!("{}", solve_part1(&parsed));
-    println!("{}", solve_part2(&parsed));
+    println!("{}", solve_part1(&input));
+    println!("{}", solve_part2(&input));
 }
 
 #[cfg(test)]
@@ -114,7 +111,7 @@ mod tests {
 
     #[test]
     fn test_parser() {
-        assert_eq!(Input::parse(INPUT), Ok(parsed_input()));
+        assert_eq!(parse::<Input>(INPUT), Ok(parsed_input()));
     }
 
     #[test]
