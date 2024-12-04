@@ -1,4 +1,4 @@
-use advent_of_code_2024::{math::{Direction, Grid}, parser::*, read};
+use advent_of_code_2024::{grid::{Direction, Grid}, parser::*, read};
 use nom::{bytes::complete::tag, character::complete::none_of, multi::many1, sequence::terminated, IResult};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -21,35 +21,33 @@ impl Parsable for Input {
 }
 
 fn solve_part1(input: &Input) -> usize {
-    input.grid.points().map(|point| {
-        if input.grid.get(&point) != Some(&'X') {
+    let grid = &input.grid;
+
+    grid.points().map(|point| {
+        if grid.get(&point) != &'X' {
             return 0;
         }
 
         Direction::VALUES.into_iter().filter(|direction| {
-            input.grid.get(&(point + direction * 1)) == Some(&'M') &&
-            input.grid.get(&(point + direction * 2)) == Some(&'A') &&
-            input.grid.get(&(point + direction * 3)) == Some(&'S')
+            grid.get(&(point + direction * 1)) == &'M' &&
+            grid.get(&(point + direction * 2)) == &'A' &&
+            grid.get(&(point + direction * 3)) == &'S'
         }).count()
     }).sum()
 }
 
 fn solve_part2(input: &Input) -> usize {
-    input.grid.points().filter(|point| {
-        input.grid.get(&point) == Some(&'A')
-            &&
-        (
-            input.grid.get(&(*point + Direction::UpLeft * 1)) == Some(&'M') && input.grid.get(&(*point + Direction::DownRight * 1)) == Some(&'S')
-                ||
-            input.grid.get(&(*point + Direction::UpLeft * 1)) == Some(&'S') && input.grid.get(&(*point + Direction::DownRight * 1)) == Some(&'M')
-        )
-            &&
+    let grid = &input.grid;
 
-        (
-            input.grid.get(&(*point + Direction::UpRight * 1)) == Some(&'M') && input.grid.get(&(*point + Direction::DownLeft * 1)) == Some(&'S')
-                ||
-            input.grid.get(&(*point + Direction::UpRight * 1)) == Some(&'S') && input.grid.get(&(*point + Direction::DownLeft * 1)) == Some(&'M')
-        )
+    grid.points().filter(|point| {
+        if grid.get(point) != &'A' {
+            return false;
+        }
+
+        let diag1 = [grid.get(&(point + Direction::UpLeft * 1)), grid.get(&(point + Direction::DownRight * 1))];
+        let diag2 = [grid.get(&(point + Direction::UpRight * 1)), grid.get(&(point + Direction::DownLeft * 1))];
+
+        return (diag1 == [&'M', &'S'] || diag1 == [&'S', &'M']) && (diag2 == [&'M', &'S'] || diag2 == [&'S', &'M'])
     }).count()
 }
 

@@ -4,7 +4,8 @@ use itertools::Itertools;
 pub struct Grid<T> {
     rows: usize,
     cols: usize,
-    data: Vec<T>
+    data: Vec<T>,
+    default: T,
 }
 
 impl<T> Grid<T> {
@@ -16,16 +17,16 @@ impl<T> Grid<T> {
         self.cols
     }
 
-    pub fn get(&self, point: &Point) -> Option<&T> {
+    pub fn get(&self, point: &Point) -> &T {
         if point.row < 0 || point.row >= self.rows as i32 {
-            return None;
+            return &self.default;
         }
 
         if point.col < 0 || point.col >= self.cols as i32 {
-            return None;
+            return &self.default;
         }
 
-        Some(&self.data[point.row as usize * self.cols + point.col as usize])
+        &self.data[point.row as usize * self.cols + point.col as usize]
     }
 
     pub fn points(&self) -> impl Iterator<Item = Point> {
@@ -33,35 +34,7 @@ impl<T> Grid<T> {
     }
 }
 
-impl<T> Grid<T> where T: Default {
-    pub fn new(rows: usize, cols: usize) -> Self {
-        let mut data = Vec::new();
-
-        data.resize_with(rows * cols, T::default);
-
-        Grid {
-            rows,
-            cols,
-            data,
-        }
-    }
-}
-
-impl<T> Grid<T> where T: Clone {
-    pub fn new_fill(rows: usize, cols: usize, value: T) -> Self {
-        let mut data = Vec::new();
-
-        data.resize(rows * cols, value);
-
-        Grid {
-            rows,
-            cols,
-            data,
-        }
-    }
-}
-
-impl<T> From<Vec<Vec<T>>> for Grid<T> where T: Clone {
+impl<T> From<Vec<Vec<T>>> for Grid<T> where T: Clone + Default {
     fn from(value: Vec<Vec<T>>) -> Self {
         let rows = value.len();
         let cols = value[0].len();
@@ -71,6 +44,7 @@ impl<T> From<Vec<Vec<T>>> for Grid<T> where T: Clone {
             rows,
             cols,
             data,
+            default: T::default(),
         }
     }
 }
@@ -80,7 +54,19 @@ pub struct Point {
     pub row: i32,
     pub col: i32,
 }
+
 impl std::ops::Add<Vector> for Point {
+    type Output = Point;
+
+    fn add(self, rhs: Vector) -> Self::Output {
+        Point {
+            row: self.row + rhs.row,
+            col: self.col + rhs.col,
+        }
+    }
+}
+
+impl std::ops::Add<Vector> for &Point {
     type Output = Point;
 
     fn add(self, rhs: Vector) -> Self::Output {
