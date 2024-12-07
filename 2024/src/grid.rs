@@ -29,8 +29,39 @@ impl<T> Grid<T> {
         &self.data[point.row as usize * self.cols + point.col as usize]
     }
 
+    pub fn set(&mut self, point: &Point, value: T) {
+        if point.row < 0 || point.row >= self.rows as i32 {
+            panic!()
+        }
+
+        if point.col < 0 || point.col >= self.cols as i32 {
+            panic!()
+        }
+
+        self.data[point.row as usize * self.cols + point.col as usize] = value;
+    }
+
     pub fn points(&self) -> impl Iterator<Item = Point> {
         (0..self.rows as i32).cartesian_product(0..self.cols as i32).map(|(row, col)| Point { row, col })
+    }
+
+    pub fn values(&self) -> impl Iterator<Item = &T> {
+        self.data.iter()
+    }
+}
+
+impl<T> Grid<T> where T: Clone {
+    pub fn new_fill(rows: usize, cols: usize, value: T) -> Self {
+        let mut data = Vec::new();
+
+        data.resize(rows * cols, value.clone());
+
+        Grid {
+            rows,
+            cols,
+            data,
+            default: value,
+        }
     }
 }
 
@@ -53,6 +84,12 @@ impl<T> From<Vec<Vec<T>>> for Grid<T> where T: Clone + Default {
 pub struct Point {
     pub row: i32,
     pub col: i32,
+}
+
+impl Point {
+    pub fn new(row: i32, col: i32) -> Self {
+        Point { row, col }
+    }
 }
 
 impl std::ops::Add<Vector> for Point {
