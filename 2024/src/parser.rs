@@ -19,6 +19,12 @@ impl Parsable for u32 {
     }
 }
 
+impl Parsable for u64 {
+    fn parser(input: &str) -> IResult<&str, Self> {
+        nom::character::complete::u64(input)
+    }
+}
+
 pub fn lines_parser<T: Parsable>(input: &str) -> IResult<&str, Vec<T>>
 {
     many1(terminated(T::parser, tag("\n")))(input)
