@@ -17,6 +17,18 @@ impl<T> Grid<T> {
         self.cols
     }
 
+    pub fn is_in_bounds(&self, point: &Point) -> bool {
+        if point.row < 0 || point.row >= self.rows as i32 {
+            return false;
+        }
+
+        if point.col < 0 || point.col >= self.cols as i32 {
+            return false;
+        }
+
+        return true;
+    }
+
     pub fn get(&self, point: &Point) -> &T {
         if point.row < 0 || point.row >= self.rows as i32 {
             return &self.default;
@@ -103,6 +115,13 @@ impl std::ops::Add<Vector> for Point {
     }
 }
 
+impl std::ops::AddAssign<Vector> for Point {
+    fn add_assign(&mut self, rhs: Vector) {
+        self.row += rhs.row;
+        self.col += rhs.col;
+    }
+}
+
 impl std::ops::Add<Vector> for &Point {
     type Output = Point;
 
@@ -110,6 +129,35 @@ impl std::ops::Add<Vector> for &Point {
         Point {
             row: self.row + rhs.row,
             col: self.col + rhs.col,
+        }
+    }
+}
+
+impl std::ops::Sub<Vector> for &Point {
+    type Output = Point;
+
+    fn sub(self, rhs: Vector) -> Self::Output {
+        Point {
+            row: self.row - rhs.row,
+            col: self.col - rhs.col,
+        }
+    }
+}
+
+impl std::ops::SubAssign<Vector> for Point {
+    fn sub_assign(&mut self, rhs: Vector) {
+        self.row -= rhs.row;
+        self.col -= rhs.col;
+    }
+}
+
+impl std::ops::Sub<&Point> for &Point {
+    type Output = Vector;
+
+    fn sub(self, rhs: &Point) -> Self::Output {
+        Vector {
+            row: self.row - rhs.row,
+            col: self.col - rhs.col,
         }
     }
 }
