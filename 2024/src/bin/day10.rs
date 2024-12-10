@@ -12,6 +12,39 @@ impl Input {
     fn new(map: impl Into<Grid<u8>>) -> Self {
         Self { map: map.into() }
     }
+
+    fn trailheads<'a>(&'a self) -> impl Iterator<Item = Point> + 'a {
+        self.map.points().filter(|point| *self.map.get(&point) == 0)
+    }
+
+    fn reachable_from(&self, point: &Point) -> Vec<Point> {
+        let mut reachable = Vec::new();
+
+        let point_height = *self.map.get(&point);
+
+        for direction in [
+            Direction::Up,
+            Direction::Right,
+            Direction::Down,
+            Direction::Left,
+        ] {
+            let point_to_check = point + direction * 1;
+
+            if !self.map.is_in_bounds(&point_to_check) {
+                continue;
+            }
+
+            let point_to_check_height = *self.map.get(&point_to_check);
+
+            if point_to_check_height != point_height + 1 {
+                continue;
+            }
+
+            reachable.push(point_to_check);
+        }
+
+        reachable
+    }
 }
 
 impl Parsable for Input {
@@ -23,42 +56,19 @@ impl Parsable for Input {
 }
 
 fn solve_part1(input: &Input) -> usize {
-    let mut scores = 0;
-
-    for point in input.map.points() {
-        if input.map.get(&point) != &0 {
-            continue;
-        }
-
+    input.trailheads().map(|point| {
         let mut to_check = vec![point];
 
         let mut checked = HashSet::new();
         let mut reachable_nines = HashSet::new();
 
         while let Some(point) = to_check.pop() {
-            let point_height = *input.map.get(&point);
-
-            for direction in [
-                Direction::Up,
-                Direction::Right,
-                Direction::Down,
-                Direction::Left,
-            ] {
-                let point_to_check = point + direction * 1;
-
+            for point_to_check in input.reachable_from(&point) {
                 if checked.contains(&point_to_check) {
                     continue;
                 }
 
-                if !input.map.is_in_bounds(&point_to_check) {
-                    continue;
-                }
-
                 let point_to_check_height = *input.map.get(&point_to_check);
-
-                if point_to_check_height != point_height + 1 {
-                    continue;
-                }
 
                 if point_to_check_height == 9 {
                     reachable_nines.insert(point_to_check);
@@ -70,57 +80,24 @@ fn solve_part1(input: &Input) -> usize {
             checked.insert(point);
         }
 
-        scores += reachable_nines.len();
-    }
-
-    scores
+        reachable_nines.len()
+    }).sum()
 }
 
-fn get_rating(map: &Grid<u8>, point: &Point) -> usize {
-    let mut rating = 0;
-
-    let point_height = *map.get(&point);
-
-    for direction in [
-        Direction::Up,
-        Direction::Right,
-        Direction::Down,
-        Direction::Left,
-    ] {
-        let point_to_check = point + direction * 1;
-
-        if !map.is_in_bounds(&point_to_check) {
-            continue;
-        }
-
-        let point_to_check_height = *map.get(&point_to_check);
-
-        if point_to_check_height != point_height + 1 {
-            continue;
-        }
+fn get_rating(input: &Input, point: &Point) -> usize {
+    input.reachable_from(&point).into_iter().map(|point_to_check| {
+        let point_to_check_height = *input.map.get(&point_to_check);
 
         if point_to_check_height == 9 {
-            rating += 1;
+            1
         } else {
-            rating += get_rating(map, &point_to_check);
+            get_rating(input, &point_to_check)
         }
-    }
-
-    rating
+    }).sum()
 }
 
 fn solve_part2(input: &Input) -> usize {
-    let mut ratings = 0;
-
-    for point in input.map.points() {
-        if input.map.get(&point) != &0 {
-            continue;
-        }
-
-        ratings += get_rating(&input.map, &point)
-    }
-
-    ratings
+    input.trailheads().map(|trailhead| get_rating(input, &trailhead)).sum()
 }
 
 fn main() {
