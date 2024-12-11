@@ -52,11 +52,15 @@ fn count_stones(stone: Stone, blinks: u8, cache: &mut HashMap<(Stone, u8), u64>)
 }
 
 fn solve_part1(input: &Input) -> u64 {
-    input.stones.iter().map(|&stone| count_stones(stone, 25, &mut HashMap::new())).sum()
+    let mut cache = HashMap::new();
+
+    input.stones.iter().map(|&stone| count_stones(stone, 25, &mut cache)).sum()
 }
 
 fn solve_part2(input: &Input) -> u64 {
-    input.stones.iter().map(|&stone| count_stones(stone, 75, &mut HashMap::new())).sum()
+    let mut cache = HashMap::new();
+
+    input.stones.iter().map(|&stone| count_stones(stone, 75, &mut cache)).sum()
 }
 
 fn main() {
