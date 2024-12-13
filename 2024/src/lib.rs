@@ -1,5 +1,6 @@
 use std::fs::read_to_string;
 
+pub mod geometry;
 pub mod grid;
 pub mod parser;
 pub mod util;
