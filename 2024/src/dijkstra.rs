@@ -67,3 +67,60 @@ pub fn shortest_path<T: Node>(starts: impl IntoIterator<Item = T>, is_goal: impl
 
     None
 }
+
+pub fn get_paths<T: Node>(starts: impl IntoIterator<Item = T>, is_goal: impl Fn(&T) -> bool) -> Option<Vec<Vec<T>>> {
+    let mut distances = HashMap::new();
+    let mut paths = HashMap::new();
+    let mut heap = BinaryHeap::new();
+
+    for start in starts {
+        distances.insert(start.clone(), 0);
+        paths.insert(start.clone(), vec![vec![start.clone()]]);
+        heap.push(State { cost: 0, position: start });
+    }
+
+    let mut goal_cost = None;
+    let mut goal_paths = vec![];
+
+    // Examine the frontier with lower cost nodes first (min-heap)
+    while let Some(State { cost, position }) = heap.pop() {
+        if let Some(max) = goal_cost {
+            if cost > max {
+                return Some(goal_paths);
+            }
+        }
+
+        if is_goal(&position) {
+            goal_cost = Some(cost);
+            goal_paths = [goal_paths, paths.get(&position).unwrap().to_owned()].concat();
+        }
+
+        if let Some(&position_cost) = distances.get(&position) {
+            if cost > position_cost {
+                continue;
+            }
+        }
+
+        for edge in position.edges() {
+            let next_cost = cost + edge.cost;
+            let next_position = edge.node.clone();
+            let mut next_paths: Vec<Vec<T>> = paths.get(&position).unwrap().iter().map(|path| [path.to_owned(), vec![edge.node.clone()]].concat()).collect();
+
+            if let Some(&position_cost) = distances.get(&next_position) {
+                if next_cost >= position_cost {
+                    if next_cost == position_cost {
+                        paths.get_mut(&next_position).unwrap().append(&mut next_paths);
+                    }
+
+                    continue;
+                }
+            }
+
+            distances.insert(next_position.clone(), next_cost);
+            paths.insert(next_position.clone(), next_paths);
+            heap.push(State { cost: next_cost, position: next_position });
+        }
+    }
+
+    None
+}

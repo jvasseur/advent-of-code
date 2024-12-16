@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use advent_of_code_2024::{dijkstra::{self, Edge}, grid::{Direction, Grid, Point}, parser::*, read};
 use nom::IResult;
 
@@ -88,7 +90,20 @@ fn solve_part1(input: &Input) -> u32 {
 }
 
 fn solve_part2(input: &Input) -> usize {
-    0
+    let paths = dijkstra::get_paths([Position {
+        grid: &input.map,
+        position: input.start.clone(),
+    }], |position| position.position.0 == input.end).unwrap();
+
+    let mut points = HashSet::new();
+
+    for path in paths {
+        for position in path {
+            points.insert(position.position.0);
+        }
+    }
+
+    points.len()
 }
 
 fn main() {
@@ -138,6 +153,6 @@ mod tests {
 
     #[test]
     fn test_solve_part2() {
-        assert_eq!(solve_part2(&parsed_input()), 0);
+        assert_eq!(solve_part2(&parsed_input()), 45);
     }
 }
