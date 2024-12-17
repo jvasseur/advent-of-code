@@ -187,11 +187,10 @@ fn solve_part2(input: &Input) -> Value {
         for possible_result in possible_results {
             for j in 0..8 {
                 let tentative_result = possible_result | (j << (3 * i));
-                let registry_a = tentative_result >> (3 * i);
 
                 let mut device = Device::from(input);
 
-                device.registry_a = registry_a;
+                device.registry_a = tentative_result >> (3 * i);
 
                 if let Some(output) = device.next() {
                     if output == program[i] {
@@ -239,13 +238,9 @@ Program: 0,1,5,4,3,0
         assert_eq!(solve_part1(&parsed_input()), vec![4, 6, 3, 5, 6, 3, 5, 2, 1, 0]);
     }
 
+
     #[test]
     fn test_solve_part2() {
-        let input = Input::new(2024, 0, 0, vec![0, 3, 5, 4, 3, 0]);
-        let mut device = Device::from(&input);
-
-        device.registry_a = 117440;
-
-        assert_eq!(device.collect::<Vec<_>>(), input.program.iter().map(|i| *i as u64).collect::<Vec<_>>());
+        assert_eq!(solve_part2(&Input::new(2024, 0, 0, vec![0, 3, 5, 4, 3, 0])), 117440);
     }
 }
