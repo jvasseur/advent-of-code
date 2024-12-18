@@ -75,7 +75,7 @@ pub struct Vector {
 }
 
 impl Vector {
-    pub fn new(dx: i64, dy: i64) -> Self {
+    pub const fn new(dx: i64, dy: i64) -> Self {
         Vector { dx, dy }
     }
 }

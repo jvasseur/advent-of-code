@@ -38,68 +38,64 @@ impl Parsable for Input {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-struct Position<'a> {
-    grid: &'a Grid<bool>,
-    position: (Point, Direction),
-}
+type Node = (Point, Direction);
 
-impl<'a> dijkstra::Node for Position<'a> {
-    fn edges(&self) -> Vec<dijkstra::Edge<Self>> {
-        let mut edges = Vec::new();
+fn get_edges(grid: &Grid<bool>, position: &Node) -> Vec<dijkstra::Edge<Node>> {
+    let mut edges = Vec::new();
 
-        let advanced = self.position.0 + self.position.1 * 1;
+    let advanced = position.0 + position.1 * 1;
 
-        if !self.grid.get(&advanced) {
-            edges.push(Edge {
-                node: Position { grid: self.grid, position: (advanced, self.position.1) },
-                cost: 1,
-            });
-        }
-
-        match self.position.1 {
-            Direction::Up | Direction::Down => {
-                for direction in [Direction::Left, Direction::Right] {
-                    edges.push(Edge {
-                        node: Position { grid: self.grid, position: (self.position.0, direction) },
-                        cost: 1000,
-                    });
-                }
-            },
-            Direction::Left |Direction::Right => {
-                for direction in [Direction::Up, Direction::Down] {
-                    edges.push(Edge {
-                        node: Position { grid: self.grid, position: (self.position.0, direction) },
-                        cost: 1000,
-                    });
-                }
-            },
-            _ => panic!("Here be dragons"),
-
-        }
-
-        edges
+    if !grid.get(&advanced) {
+        edges.push(Edge {
+            node: (advanced, position.1),
+            cost: 1,
+        });
     }
+
+    match position.1 {
+        Direction::Up | Direction::Down => {
+            for direction in [Direction::Left, Direction::Right] {
+                edges.push(Edge {
+                    node: (position.0, direction),
+                    cost: 1000,
+                });
+            }
+        },
+        Direction::Left |Direction::Right => {
+            for direction in [Direction::Up, Direction::Down] {
+                edges.push(Edge {
+                    node: (position.0, direction),
+                    cost: 1000,
+                });
+            }
+        },
+        _ => panic!("Here be dragons"),
+
+    }
+
+    edges
 }
 
 fn solve_part1(input: &Input) -> u32 {
-    dijkstra::shortest_path([Position {
-        grid: &input.map,
-        position: input.start.clone(),
-    }], |position| position.position.0 == input.end).unwrap()
+    dijkstra::shortest_path(
+        [input.start],
+        |position| get_edges(&input.map, &position),
+        |position| position.0 == input.end,
+    ).unwrap()
 }
 
 fn solve_part2(input: &Input) -> usize {
-    let paths = dijkstra::get_paths([Position {
-        grid: &input.map,
-        position: input.start.clone(),
-    }], |position| position.position.0 == input.end).unwrap();
+    let paths = dijkstra::get_paths(
+        [input.start],
+        |position| get_edges(&input.map, &position),
+        |position| position.0 == input.end,
+    ).unwrap();
 
     let mut points = HashSet::new();
 
     for path in paths {
         for position in path {
-            points.insert(position.position.0);
+            points.insert(position.0);
         }
     }
 

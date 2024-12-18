@@ -1,34 +1,34 @@
 use core::hash::Hash;
 use std::{cmp::Ordering, collections::{HashMap, BinaryHeap}};
 
-pub trait Node: Sized + Clone + Eq + PartialEq + Hash {
-    fn edges(&self) -> Vec<Edge<Self>>;
-}
-
-pub struct Edge<T: Node> {
+pub struct Edge<T> {
     pub node: T,
     pub cost: u32,
 }
 
 #[derive(Eq, PartialEq)]
-struct State<T: Node> {
+struct State<T> {
     cost: u32,
     position: T,
 }
 
-impl<T: Node> Ord for State<T>  {
+impl<T: Eq + PartialEq> Ord for State<T>  {
     fn cmp(&self, other: &Self) -> Ordering {
         other.cost.cmp(&self.cost)
     }
 }
 
-impl<T: Node> PartialOrd for State<T> {
+impl<T: Eq + PartialEq> PartialOrd for State<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-pub fn shortest_path<T: Node>(starts: impl IntoIterator<Item = T>, is_goal: impl Fn(&T) -> bool) -> Option<u32> {
+pub fn shortest_path<T: Eq + Clone + Hash>(
+    starts: impl IntoIterator<Item = T>,
+    get_edges: impl Fn(&T) -> Vec<Edge<T>>,
+    is_goal: impl Fn(&T) -> bool,
+) -> Option<u32> {
     let mut distances = HashMap::new();
     let mut heap = BinaryHeap::new();
 
@@ -50,7 +50,7 @@ pub fn shortest_path<T: Node>(starts: impl IntoIterator<Item = T>, is_goal: impl
             }
         }
 
-        for edge in position.edges() {
+        for edge in get_edges(&position) {
             let next_cost = cost + edge.cost;
             let next_position = edge.node;
 
@@ -68,7 +68,11 @@ pub fn shortest_path<T: Node>(starts: impl IntoIterator<Item = T>, is_goal: impl
     None
 }
 
-pub fn get_paths<T: Node>(starts: impl IntoIterator<Item = T>, is_goal: impl Fn(&T) -> bool) -> Option<Vec<Vec<T>>> {
+pub fn get_paths<T: Eq + Clone + Hash>(
+    starts: impl IntoIterator<Item = T>,
+    get_edges: impl Fn(&T) -> Vec<Edge<T>>,
+    is_goal: impl Fn(&T) -> bool
+) -> Option<Vec<Vec<T>>> {
     let mut distances = HashMap::new();
     let mut paths = HashMap::new();
     let mut heap = BinaryHeap::new();
@@ -101,7 +105,7 @@ pub fn get_paths<T: Node>(starts: impl IntoIterator<Item = T>, is_goal: impl Fn(
             }
         }
 
-        for edge in position.edges() {
+        for edge in get_edges(&position) {
             let next_cost = cost + edge.cost;
             let next_position = edge.node.clone();
             let mut next_paths: Vec<Vec<T>> = paths.get(&position).unwrap().iter().map(|path| [path.to_owned(), vec![edge.node.clone()]].concat()).collect();
