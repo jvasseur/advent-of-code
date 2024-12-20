@@ -89,7 +89,7 @@ fn solve_part2(input: &Input) -> usize {
         [input.start],
         |position| get_edges(&input.map, &position),
         |position| position.0 == input.end,
-    ).unwrap();
+    );
 
     let mut points = HashSet::new();
 

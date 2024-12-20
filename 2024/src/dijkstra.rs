@@ -72,7 +72,7 @@ pub fn get_paths<T: Eq + Clone + Hash>(
     starts: impl IntoIterator<Item = T>,
     get_edges: impl Fn(&T) -> Vec<Edge<T>>,
     is_goal: impl Fn(&T) -> bool
-) -> Option<Vec<Vec<T>>> {
+) -> Vec<Vec<T>> {
     let mut distances = HashMap::new();
     let mut paths = HashMap::new();
     let mut heap = BinaryHeap::new();
@@ -90,7 +90,7 @@ pub fn get_paths<T: Eq + Clone + Hash>(
     while let Some(State { cost, position }) = heap.pop() {
         if let Some(max) = goal_cost {
             if cost > max {
-                return Some(goal_paths);
+                break;
             }
         }
 
@@ -126,5 +126,5 @@ pub fn get_paths<T: Eq + Clone + Hash>(
         }
     }
 
-    None
+    goal_paths
 }
