@@ -85,9 +85,9 @@ trait KeyPad {
             }
         }
 
-        // Don't ask why, it juste works....
-        // The idea is that depending of the dirrection the optimal path is not the same,
-        // but to find the which one is the best for which direction I just did some trial.
+        // Don't ask why, it just works....
+        // The idea is that depending of the direction the optimal path is not the same,
+        // but to find which one is the best for which direction I just did some trial.
         let paths = if from.0 > to.0 {
             vec![first, second]
         } else {
