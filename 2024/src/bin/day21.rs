@@ -53,14 +53,6 @@ fn range(a: u8, b: u8) -> Vec<u8> {
     Vec::new()
 }
 
-fn compress(buttons: Vec<(u8, u8)>) -> Vec<(usize, (u8, u8))> {
-    buttons.into_iter().dedup_with_count().collect()
-}
-
-fn expand(buttons: Vec<(usize, (u8, u8))>) -> Vec<(u8, u8)> {
-    buttons.into_iter().map(|(count, button)| [button].repeat(count)).concat()
-}
-
 type KeyPadButton = (u8, u8);
 
 trait KeyPad {
@@ -105,7 +97,7 @@ trait KeyPad {
         paths.into_iter().filter(|path| path.iter().all(|position| self.is_valid(position))).unique().collect()
     }
 
-    fn get_possible_buttons_for_code(&self, code: u32) -> Vec<Vec<(usize, KeyPadButton)>>;
+    fn get_possible_buttons_for_code(&self, code: u32) -> Vec<Vec<KeyPadButton>>;
 }
 
 // +---+---+---+
@@ -135,7 +127,7 @@ impl KeyPad for NumericKeyPad {
         position != &(0, 0)
     }
 
-    fn get_possible_buttons_for_code(&self, code: u32) -> Vec<Vec<(usize, KeyPadButton)>> {
+    fn get_possible_buttons_for_code(&self, code: u32) -> Vec<Vec<KeyPadButton>> {
         let mut buttons = Vec::new();
 
         for number in [code / 100, (code / 10) % 10, code % 10] {
@@ -156,7 +148,7 @@ impl KeyPad for NumericKeyPad {
 
         buttons.push((2, 0));
 
-        vec![compress(buttons)]
+        vec![buttons]
     }
 }
 
@@ -214,46 +206,20 @@ impl KeyPad for RobotKeyPad {
         position != &(0, 1)
     }
 
-    fn get_possible_buttons_for_code(&self, code: u32) -> Vec<Vec<(usize, KeyPadButton)>> {
+    fn get_possible_buttons_for_code(&self, code: u32) -> Vec<Vec<KeyPadButton>> {
         let mut possible_buttons = Vec::new();
 
         for buttons in self.target.get_possible_buttons_for_code(code) {
-            let mut current = vec![vec![]];
-
-            for ((_, start), (count, end)) in [(0, self.target.get_start())].into_iter().chain(buttons.into_iter()).tuple_windows() {
-                let mut paths_buttons = Vec::new();
-
-                for path in self.target.get_paths(start, end) {
-                    let mut path_buttons = Vec::new();
-
-                    for (a, b) in path.into_iter().tuple_windows() {
-                        path_buttons.push(match ((b.0 as i32 - a.0 as i32), (b.1 as i32 - a.1 as i32)) {
-                            (-1, 0) => (0, 0),
-                            (1, 0) => (2, 0),
-                            (0, -1) => (1, 0),
-                            (0, 1) => (1, 1),
-                            _ => panic!("Invalid movment"),
-                        });
-                    }
-
-                    for _ in 0..count {
-                        path_buttons.push((2, 1));
-                    }
-
-                    paths_buttons.push(path_buttons);
-                }
-
-                current = current.into_iter().cartesian_product(paths_buttons.into_iter()).map(|(a, b)| [a, b].concat()).collect();
-            }
-
-            possible_buttons = [possible_buttons, current].concat();
+            possible_buttons = [
+                possible_buttons,
+                self.get_paths_for_path(buttons),
+            ].concat();
         }
 
         let best = possible_buttons.iter().map(|puttons| puttons.len()).min().unwrap();
 
         possible_buttons.into_iter()
             .filter(|buttons| buttons.len() == best)
-            .map(compress)
             .collect()
     }
 }
@@ -288,7 +254,7 @@ fn solve_v3(input: &Input, robots_count: u8) -> usize {
         let mut best = None;
 
         for path in start_keypad.get_possible_buttons_for_code(code.numeric_part) {
-            let mut counts = group(expand(path));
+            let mut counts = group(path);
 
             for _ in 1..robots_count {
                 let mut new_counts = HashMap::new();
@@ -418,10 +384,10 @@ mod tests {
 
         let mut left = robot.get_possible_buttons_for_code(029);
         let mut right = vec![
-            vec![(1, (0, 0)), (1, (2, 1)), (1, (1, 1)), (1, (2, 1)), (1, (2, 0)), (2, (1, 1)), (1, (2, 1)), (3, (1, 0)), (1, (2, 1))],
+            vec![(0, 0), (2, 1), (1, 1), (2, 1), (2, 0), (1, 1), (1, 1), (2, 1), (1, 0), (1, 0), (1, 0), (2, 1)],
             // This one is given in the example but since it's not an optimal one we don't return it
             // vec![(0, 0), (2, 1), (1, 1), (2, 1), (1, 1), (2, 0), (1, 1), (2, 1), (1, 0), (1, 0), (1, 0), (2, 1)],
-            vec![(1, (0, 0)), (1, (2, 1)), (1, (1, 1)), (1, (2, 1)), (2, (1, 1)), (1, (2, 0)), (1, (2, 1)), (3, (1, 0)), (1, (2, 1))],
+            vec![(0, 0), (2, 1), (1, 1), (2, 1), (1, 1), (1, 1), (2, 0), (2, 1), (1, 0), (1, 0), (1, 0), (2, 1)],
         ];
 
         left.sort();
