@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use advent_of_code_2024::{parser::*, read};
 use itertools::Itertools;
-use nom::{combinator::into, IResult};
+use nom::{bytes::complete::tag, combinator::into, multi::many1, sequence::terminated, IResult};
 
 type Number = u64;
 
@@ -49,17 +49,15 @@ struct Input {
     monkeys: Vec<Monkey>
 }
 
-impl Input {
-    fn new(monkeys: Vec<Monkey>) -> Self {
-        Self { monkeys }
+impl From<Vec<Monkey>> for Input {
+    fn from(value: Vec<Monkey>) -> Self {
+        Self { monkeys: value }
     }
 }
 
 impl Parsable for Input {
     fn parser(input: &str) -> IResult<&str, Self> {
-        let (input, monkeys) = lines_parser(input)?;
-
-        Ok((input, Input::new(monkeys)))
+        into(many1(terminated(Monkey::parser, tag("\n"))))(input)
     }
 }
 
@@ -80,11 +78,7 @@ fn solve_part2(input: &Input) -> Number {
 
         let mut monkey_map = HashMap::new();
         for (diffs_seq, price) in diffs_with_price {
-            if monkey_map.contains_key(&diffs_seq) {
-                continue;
-            }
-
-            monkey_map.insert(diffs_seq, price);
+            monkey_map.entry(diffs_seq).or_insert(price);
         }
 
         for (diffs_seq, price) in monkey_map {
@@ -113,7 +107,7 @@ mod tests {
 ";
 
     fn parsed_input() -> Input {
-        Input::new(vec![
+        Input::from(vec![
             Monkey::from(1),
             Monkey::from(10),
             Monkey::from(100),
@@ -152,7 +146,7 @@ mod tests {
 
     #[test]
     fn test_solve_part2() {
-        assert_eq!(solve_part2(&Input::new(vec![
+        assert_eq!(solve_part2(&Input::from(vec![
             Monkey::from(1),
             Monkey::from(2),
             Monkey::from(3),

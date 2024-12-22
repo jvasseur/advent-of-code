@@ -1,3 +1,4 @@
+use std::convert::identity;
 use advent_of_code_2024::{parser::*, read};
 use nom::{branch::alt, bytes::complete::tag, character::complete::{anychar, u32}, combinator::{map, value}, multi::many1, sequence::tuple, IResult};
 
@@ -36,7 +37,7 @@ impl Parsable for Input {
             value(None, anychar),
         )))(input)?;
 
-        let instruction = content.into_iter().filter_map(|value| value).collect::<Vec<Instruction>>();
+        let instruction = content.into_iter().filter_map(identity).collect::<Vec<Instruction>>();
 
         Ok((input, Input::new(instruction)))
     }

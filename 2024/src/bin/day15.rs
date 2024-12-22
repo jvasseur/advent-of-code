@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-
+use std::{collections::HashSet, convert::identity};
 use advent_of_code_2024::{grid::{Direction, Grid, Point}, parser::*, read};
 use nom::{branch::alt, bytes::complete::tag, combinator::value, multi::many1, sequence::terminated, IResult};
 
@@ -60,7 +59,7 @@ impl Parsable for Input {
         Ok((input, Input::new(
             clean_grid,
             position,
-            directions.into_iter().filter_map(|v| v).collect::<Vec<_>>(),
+            directions.into_iter().filter_map(identity).collect::<Vec<_>>(),
         )))
     }
 }
