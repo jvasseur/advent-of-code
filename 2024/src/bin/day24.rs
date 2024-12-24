@@ -150,7 +150,6 @@ fn solve_part1(input: &Input) -> u64 {
     Circuit::from(input).get_z()
 }
 
-// z30 is not right
 fn solve_part2(input: &Input) -> String {
     let mut input = input.clone();
     let mut swaps = Vec::new();
