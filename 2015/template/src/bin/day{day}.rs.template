@@ -11,7 +11,7 @@ impl Input {
 }
 
 impl Parsable for Input {
-    fn parser<'a>(input: &'a str) -> ParserResult<&'a, Self> {
+    fn parser<'a>(input: &'a str) -> ParserResult<'a, Self> {
         Ok((input, Input::new()))
     }
 }
