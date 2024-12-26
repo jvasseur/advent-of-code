@@ -1,7 +1,5 @@
-use advent_of_code_2015::{read, parse_lines};
-use nom::IResult;
-use nom::character::complete::{char, u32};
-use nom::sequence::tuple;
+use advent_of_code_2015::{parser::*, read};
+use nom::{combinator::map, multi::many1, character::complete::{char, u32}, sequence::{terminated, tuple}};
 use std::cmp::min;
 
 #[derive(Clone,Debug,Eq,PartialEq)]
@@ -9,6 +7,12 @@ struct Gift {
     l: u32,
     h: u32,
     w: u32,
+}
+
+impl Gift {
+    fn new(l: u32, h: u32, w:u32) -> Self {
+        Self { l, h, w }
+    }
 }
 
 impl Gift {
@@ -35,59 +39,62 @@ impl Gift {
     }
 }
 
-fn parser(input: &str) -> IResult<&str, Gift> {
-    let (rest, (l, _, h, _, w)) = tuple((u32, char('x'), u32, char('x'), u32))(input)?;
-
-    Ok((rest, Gift { l, h, w }))
+impl Parsable for Gift {
+    fn parser<'a>(input: &'a str) -> ParserResult<'a, Self> {
+        map(tuple((u32, char('x'), u32, char('x'), u32)), |(l, _, h, _, w)| Gift::new(l, h, w))(input)
+    }
 }
 
-fn solve_part1(input: &[Gift]) -> u32 {
-    input.iter().fold(0, |wrapping, gift: &Gift| wrapping + gift.wrapping())
+struct Input {
+    gifts: Vec<Gift>,
 }
 
-fn solve_part2(input: &[Gift]) -> u32 {
-    input.iter().fold(0, |wrapping, gift: &Gift| wrapping + gift.ribon())
+impl Input {
+    fn new(gifts: Vec<Gift>) -> Self {
+        Self { gifts }
+    }
+}
+
+impl Parsable for Input {
+    fn parser<'a>(input: &'a str) -> ParserResult<'a, Self> {
+        map(many1(terminated(Gift::parser, char('\n'))), Input::new)(input)
+    }
+}
+
+fn solve_part1(input: &Input) -> u32 {
+    input.gifts.iter().map(|gift| gift.wrapping()).sum()
+}
+
+fn solve_part2(input: &Input) -> u32 {
+    input.gifts.iter().map(|gift| gift.ribon()).sum()
 }
 
 fn main() {
-    let input = read(2);
+    let input = parse(&read(2).unwrap()).unwrap();
 
-    let parsed_input = parse_lines(parser, &input);
-
-    println!("{}", solve_part1(&parsed_input));
-    println!("{}", solve_part2(&parsed_input));
+    println!("{}", solve_part1(&input));
+    println!("{}", solve_part2(&input));
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Gift;
-    use super::parser;
-    use super::solve_part1;
-    use super::solve_part2;
+    use super::*;
 
     #[test]
-    fn test_parse() {
-        assert_eq!(parser("4x3x2"), Ok(("", Gift { l: 4, h: 3, w: 2 })));
-        assert_eq!(parser("1x2x3"), Ok(("", Gift { l: 1, h: 2, w: 3 })));
+    fn test_parser() {
+        assert_eq!(Gift::parser("4x3x2"), Ok(("", Gift::new(4, 3, 2))));
+        assert_eq!(Gift::parser("1x2x3"), Ok(("", Gift::new(1, 2, 3))));
     }
 
     #[test]
-    fn test_solve_part1() {
-        assert_eq!(solve_part1(&vec![
-            Gift { l: 2, h: 3, w: 4 },
-        ]), 58);
-        assert_eq!(solve_part1(&vec![
-            Gift { l: 1, h: 1, w: 10 },
-        ]), 43);
+    fn test_wrapping() {
+        assert_eq!(Gift::new(2, 3, 4).wrapping(), 58);
+        assert_eq!(Gift::new(1, 1, 10).wrapping(), 43);
     }
 
     #[test]
-    fn test_solve_part2() {
-        assert_eq!(solve_part2(&vec![
-            Gift { l: 2, h: 3, w: 4 },
-        ]), 34);
-        assert_eq!(solve_part2(&vec![
-            Gift { l: 1, h: 1, w: 10 },
-        ]), 14);
+    fn test_ribon() {
+        assert_eq!(Gift::new(2, 3, 4).ribon(), 34);
+        assert_eq!(Gift::new(1, 1, 10).ribon(), 14);
     }
 }

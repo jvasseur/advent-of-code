@@ -1,12 +1,11 @@
-use advent_of_code_2015::{read, parse};
+use advent_of_code_2015::{parser::*, read};
 use nom::branch::alt;
 use nom::character::complete::char;
-use nom::combinator::value;
+use nom::combinator::{map, value};
 use nom::multi::many0;
-use nom::IResult;
 use std::collections::HashSet;
 
-#[derive(Clone,Debug,Eq,PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 enum Direction {
     North,
     South,
@@ -14,10 +13,38 @@ enum Direction {
     West,
 }
 
+impl Parsable for Direction {
+    fn parser<'a>(input: &'a str) -> ParserResult<'a, Self> {
+        alt((
+            value(Direction::North, char('^')),
+            value(Direction::South, char('v')),
+            value(Direction::East, char('>')),
+            value(Direction::West, char('<')),
+        ))(input)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct Input {
+    directions: Vec<Direction>,
+}
+
+impl Input {
+    fn new(directions: Vec<Direction>) -> Self {
+        Self { directions }
+    }
+}
+
+impl Parsable for Input {
+    fn parser<'a>(input: &'a str) -> ParserResult<'a, Self> {
+        map(many0(Direction::parser), Input::new)(input)
+    }
+}
+
 #[derive(Clone,Copy,Debug,Eq,Hash,PartialEq)]
 struct Position {
-    pub x: i32,
-    pub y: i32,
+    x: i32,
+    y: i32,
 }
 
 impl Position {
@@ -43,16 +70,7 @@ impl Position {
     }
 }
 
-fn parser(input: &str) -> IResult<&str, Vec<Direction>> {
-    many0(alt((
-        value(Direction::North, char('^')),
-        value(Direction::South, char('v')),
-        value(Direction::East, char('>')),
-        value(Direction::West, char('<')),
-    )))(input)
-}
-
-fn solve_part1(input: &[Direction]) -> usize {
+fn solve_part1(input: &Input) -> usize {
     let mut position = Position {
         x: 0,
         y: 0,
@@ -62,7 +80,7 @@ fn solve_part1(input: &[Direction]) -> usize {
 
     visited.insert(position);
 
-    for direction in input {
+    for direction in &input.directions {
         position = position.move_in(direction);
 
         visited.insert(position);
@@ -71,7 +89,7 @@ fn solve_part1(input: &[Direction]) -> usize {
     visited.len()
 }
 
-fn solve_part2(input: &[Direction]) -> usize {
+fn solve_part2(input: &Input) -> usize {
     let mut santa = Position {
         x: 0,
         y: 0,
@@ -85,7 +103,7 @@ fn solve_part2(input: &[Direction]) -> usize {
 
     visited.insert(santa);
 
-    for directions in input.chunks(2) {
+    for directions in (&input.directions).chunks(2) {
         santa = santa.move_in(&directions[0]);
         robot_santa = robot_santa.move_in(&directions[1]);
 
@@ -97,24 +115,19 @@ fn solve_part2(input: &[Direction]) -> usize {
 }
 
 fn main() {
-    let input = read(3);
+    let input = parse(&read(3).unwrap()).unwrap();
 
-    let parsed_input = parse(parser, &input);
-
-    println!("{}", solve_part1(&parsed_input));
-    println!("{}", solve_part2(&parsed_input));
+    println!("{}", solve_part1(&input));
+    println!("{}", solve_part2(&input));
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Direction;
-    use super::parser;
-    use super::solve_part1;
-    use super::solve_part2;
+    use super::*;
 
     #[test]
-    fn test_parse() {
-        assert_eq!(parser("^>v<"), Ok(("", vec![
+    fn test_parser() {
+        assert_eq!(parse::<Input>("^>v<"), Ok(Input::new(vec![
             Direction::North,
             Direction::East,
             Direction::South,
@@ -124,16 +137,16 @@ mod tests {
 
     #[test]
     fn test_solve_part1() {
-        assert_eq!(solve_part1(&vec![
+        assert_eq!(solve_part1(&Input::new(vec![
             Direction::East,
-        ]), 2);
-        assert_eq!(solve_part1(&vec![
+        ])), 2);
+        assert_eq!(solve_part1(&Input::new(vec![
             Direction::North,
             Direction::East,
             Direction::South,
             Direction::West,
-        ]), 4);
-        assert_eq!(solve_part1(&vec![
+        ])), 4);
+        assert_eq!(solve_part1(&Input::new(vec![
             Direction::North,
             Direction::South,
             Direction::North,
@@ -144,22 +157,22 @@ mod tests {
             Direction::South,
             Direction::North,
             Direction::South,
-        ]), 2);
+        ])), 2);
     }
 
     #[test]
     fn test_solve_part2() {
-        assert_eq!(solve_part2(&vec![
+        assert_eq!(solve_part2(&Input::new(vec![
             Direction::North,
             Direction::South,
-        ]), 3);
-        assert_eq!(solve_part2(&vec![
+        ])), 3);
+        assert_eq!(solve_part2(&Input::new(vec![
             Direction::North,
             Direction::East,
             Direction::South,
             Direction::West,
-        ]), 3);
-        assert_eq!(solve_part2(&vec![
+        ])), 3);
+        assert_eq!(solve_part2(&Input::new(vec![
             Direction::North,
             Direction::South,
             Direction::North,
@@ -170,6 +183,6 @@ mod tests {
             Direction::South,
             Direction::North,
             Direction::South,
-        ]), 11);
+        ])), 11);
     }
 }

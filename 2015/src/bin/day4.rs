@@ -34,7 +34,7 @@ fn solve_part2(input: &str) -> u32 {
 }
 
 fn main() {
-    let input = read(4);
+    let input = read(4).unwrap();
 
     let parsed_input = input.trim_end_matches('\n');
 
@@ -47,7 +47,6 @@ mod tests {
     use super::solve_part1;
 
     #[test]
-    #[ignore]
     fn test_solve_part1() {
         assert_eq!(solve_part1("abcdef"), 609043);
         assert_eq!(solve_part1("pqrstuv"), 1048970);

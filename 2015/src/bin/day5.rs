@@ -1,6 +1,22 @@
-use advent_of_code_2015::{read, parse_lines};
+use advent_of_code_2015::{parser::*, read};
 use itertools::Itertools;
-use nom::character::complete::alpha1;
+use nom::{character::complete::{alpha1, char}, combinator::map, multi::many1, sequence::terminated};
+
+struct Input {
+    strings: Vec<String>
+}
+
+impl Input {
+    fn new(strings: Vec<String>) -> Self {
+        Self { strings }
+    }
+}
+
+impl Parsable for Input {
+    fn parser<'a>(input: &'a str) -> ParserResult<'a, Self> {
+        map(many1(terminated(map(alpha1, |str: &str| str.to_owned()), char('\n'))), Input::new)(input)
+    }
+}
 
 fn is_nice(input: &str) -> bool {
     has_voyels(input) && has_double(input) && !has_badies(input)
@@ -63,27 +79,24 @@ fn has_repeated_separated(input: &str) -> bool {
     return false;
 }
 
-fn solve_part1(input: &[&str]) -> usize {
-    input.iter().filter(|line: &&&str| is_nice(&line)).count()
+fn solve_part1(input: &Input) -> usize {
+    input.strings.iter().filter(|line| is_nice(&line)).count()
 }
 
-fn solve_part2(input: &[&str]) -> usize {
-    input.iter().filter(|line: &&&str| is_nice2(&line)).count()
+fn solve_part2(input: &Input) -> usize {
+    input.strings.iter().filter(|line| is_nice2(&line)).count()
 }
 
 fn main() {
-    let input = read(5);
+    let input = parse(&read(5).unwrap()).unwrap();
 
-    let parsed_input = parse_lines(alpha1, &input);
-
-    println!("{}", solve_part1(&parsed_input));
-    println!("{}", solve_part2(&parsed_input));
+    println!("{}", solve_part1(&input));
+    println!("{}", solve_part2(&input));
 }
 
 #[cfg(test)]
 mod tests {
-    use super::is_nice;
-    use super::is_nice2;
+    use super::*;
 
     #[test]
     fn test_is_nice() {
