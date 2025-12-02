@@ -1,13 +1,25 @@
 use advent_of_code_2025::{parser::*, read};
 use nom::IResult;
 
+type Value = ();
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 struct Input {
+    values: Vec<Value>
 }
 
 impl Input {
-    fn new() -> Self {
-        Self {}
+    fn new(ranges: impl Into<Vec<Value>>) -> Self {
+        Self { values: values.into() }
+    }
+}
+
+impl IntoIterator for &Input {
+    type Item = &'a Value;
+    type IntoIter = std::slice::Iter<'a, Value>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.values.iter()
     }
 }
 
