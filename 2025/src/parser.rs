@@ -5,8 +5,17 @@ use nom::multi::many1;
 use nom::sequence::terminated;
 use nom::{Finish, IResult};
 
-pub fn parse<T: Parsable>(input: &str) -> Result<T, Error<&str>> {
+pub fn from_str<T: Parsable>(input: &str) -> Result<T, Error<&str>> {
     Ok(all_consuming(T::parser)(input).finish()?.1)
+}
+
+pub fn parse<T: Parsable>(input: &str) -> IResult<&str, T> {
+    T::parser(input)
+}
+
+pub fn parse_lines<T: Parsable>(input: &str) -> IResult<&str, Vec<T>>
+{
+    many1(terminated(T::parser, tag("\n")))(input)
 }
 
 pub trait Parsable: Sized {
@@ -41,9 +50,4 @@ impl Parsable for char {
     fn parser(input: &str) -> IResult<&str, Self> {
         nom::character::complete::anychar(input)
     }
-}
-
-pub fn lines_parser<T: Parsable>(input: &str) -> IResult<&str, Vec<T>>
-{
-    many1(terminated(T::parser, tag("\n")))(input)
 }

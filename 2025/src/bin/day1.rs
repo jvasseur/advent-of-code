@@ -1,5 +1,6 @@
 use advent_of_code_2025::{parser::*, read};
-use nom::{IResult, branch::alt, bytes::complete::tag, combinator::value};
+use derive_more::IntoIterator;
+use nom::{IResult, branch::alt, bytes::complete::tag, combinator::{map, value}};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 enum Direction {
@@ -30,29 +31,29 @@ impl Rotation {
 
 impl Parsable for Rotation {
     fn parser(input: &str) -> IResult<&str, Self> {
-        let (input, direction) = Direction::parser(input)?;
-        let (input, count) = u16::parser(input)?;
+        let (input, direction) = parse(input)?;
+        let (input, count) = parse(input)?;
 
         Ok((input, Rotation::new(direction, count)))
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
-struct Input {
-    rotations: Vec<Rotation>,
-}
+#[derive(Clone, Debug, PartialEq, Eq, IntoIterator)]
+#[into_iterator(owned, ref, ref_mut)]
+struct Input(Vec<Rotation>);
 
 impl Input {
     fn new(rotations: impl Into<Vec<Rotation>>) -> Self {
-        Self { rotations: rotations.into() }
+        Self(rotations.into())
     }
 }
 
 impl Parsable for Input {
     fn parser(input: &str) -> IResult<&str, Self> {
-        let (input, rotations) = lines_parser(input)?;
-
-        Ok((input, Self::new(rotations)))
+        map(
+            parse_lines,
+            Input::new,
+        )(input)
     }
 }
 
@@ -96,7 +97,7 @@ fn solve_part1(input: &Input) -> u16 {
     let mut password = 0;
     let mut dial = Dial::new();
 
-    for rotation in input.rotations.iter() {
+    for rotation in input {
         dial.rotate(&rotation);
 
         if dial.value == 0 {
@@ -111,17 +112,15 @@ fn solve_part2(input: &Input) -> u16 {
     let mut password: u16 = 0;
     let mut dial = Dial::new();
 
-    for rotation in input.rotations.iter() {
+    for rotation in input {
         password += dial.rotate(&rotation);
-
-        println!("{:?}, {:?}, {:?}", rotation, dial, password)
     }
 
     password
 }
 
 fn main() {
-    let input = parse(&read(1).unwrap()).unwrap();
+    let input = from_str(&read(1).unwrap()).unwrap();
 
     println!("{}", solve_part1(&input));
     println!("{}", solve_part2(&input));
@@ -160,7 +159,7 @@ L82
 
     #[test]
     fn test_parser() {
-        assert_eq!(parse::<Input>(INPUT), Ok(parsed_input()));
+        assert_eq!(parse(INPUT), Ok(("", parsed_input())));
     }
 
     #[test]

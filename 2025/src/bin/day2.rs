@@ -1,47 +1,39 @@
 use std::ops::RangeInclusive;
 use advent_of_code_2025::{parser::*, read};
+use derive_more::IntoIterator;
 use nom::{IResult, bytes::complete::tag, combinator::map, multi::separated_list1, sequence::{separated_pair, terminated}};
 
 type Id = u64;
 
-#[derive(Clone, PartialEq, Eq, Debug)]
-struct Input {
-    ranges: Vec<RangeInclusive<Id>>
-}
+#[derive(Clone, Debug, PartialEq, Eq, IntoIterator)]
+#[into_iterator(owned, ref, ref_mut)]
+struct Input(Vec<RangeInclusive<Id>>);
 
 impl Input {
     fn new(ranges: impl Into<Vec<RangeInclusive<Id>>>) -> Self {
-        Self { ranges: ranges.into() }
-    }
-}
-
-impl<'a> IntoIterator for &'a Input {
-    type Item = &'a RangeInclusive<Id>;
-    type IntoIter = std::slice::Iter<'a, RangeInclusive<Id>>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.ranges.iter()
+        Self(ranges.into())
     }
 }
 
 impl Parsable for Input {
     fn parser(input: &str) -> IResult<&str, Self> {
-        let (input, ranges) = terminated(
-            separated_list1(
-                tag(","),
-                map(
-                    separated_pair(
-                        Id::parser,
-                        tag("-"),
-                        Id::parser,
+        map(
+            terminated(
+                separated_list1(
+                    tag(","),
+                    map(
+                        separated_pair(
+                            parse,
+                            tag("-"),
+                            parse,
+                        ),
+                        |(start, end)| start..=end,
                     ),
-                    |(start, end)| start..=end,
                 ),
+                tag("\n"),
             ),
-            tag("\n"),
-        )(input)?;
-
-        Ok((input, Input::new(ranges)))
+            Input::new,
+        )(input)
     }
 }
 
@@ -56,23 +48,19 @@ fn is_silly_2(value: Id) -> bool {
     let string_value = value.to_string();
     let string_length = string_value.len();
 
-    'outer: for split_length in 1..=(string_length / 2) {
-        let div = string_length.div_euclid(split_length);
-        let rem = string_length.rem_euclid(split_length);
+    for pattern_length in 1..=(string_length / 2) {
+        let div = string_length.div_euclid(pattern_length);
+        let rem = string_length.rem_euclid(pattern_length);
 
         if rem != 0 {
             continue;
         }
 
-        let pattern = &string_value[0..split_length];
+        let pattern = &string_value[0..pattern_length];
 
-        for i in 1..div {
-            if &string_value[i*split_length..(i+1)*split_length] != pattern {
-                continue 'outer;
-            }
+        if (1..div).all(|i| &string_value[i*pattern_length..(i+1)*pattern_length] == pattern) {
+            return true;
         }
-
-        return true;
     }
 
     return false;
@@ -101,7 +89,7 @@ fn solve_part2(input: &Input) -> u64 {
 }
 
 fn main() {
-    let input = parse(&read(2).unwrap()).unwrap();
+    let input = from_str(&read(2).unwrap()).unwrap();
 
     println!("{}", solve_part1(&input));
     println!("{}", solve_part2(&input));
@@ -132,7 +120,7 @@ mod tests {
 
     #[test]
     fn test_parser() {
-        assert_eq!(parse::<Input>(INPUT), Ok(parsed_input()));
+        assert_eq!(parse(INPUT), Ok(("", parsed_input())));
     }
 
     #[test]

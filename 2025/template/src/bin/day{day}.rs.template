@@ -1,9 +1,11 @@
 use advent_of_code_2025::{parser::*, read};
+use derive_more::IntoIterator;
 use nom::IResult;
 
 type Value = ();
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, IntoIterator)]
+#[into_iterator(owned, ref, ref_mut)]
 struct Input {
     values: Vec<Value>
 }
@@ -11,15 +13,6 @@ struct Input {
 impl Input {
     fn new(ranges: impl Into<Vec<Value>>) -> Self {
         Self { values: values.into() }
-    }
-}
-
-impl IntoIterator for &Input {
-    type Item = &'a Value;
-    type IntoIter = std::slice::Iter<'a, Value>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.values.iter()
     }
 }
 
@@ -38,7 +31,7 @@ fn solve_part2(input: &Input) -> usize {
 }
 
 fn main() {
-    let input = parse(&read({day}).unwrap()).unwrap();
+    let input = from_str(&read({day}).unwrap()).unwrap();
 
     println!("{}", solve_part1(&input));
     println!("{}", solve_part2(&input));
@@ -56,7 +49,7 @@ mod tests {
 
     #[test]
     fn test_parser() {
-        assert_eq!(parse::<Input>(INPUT), Ok(parsed_input()));
+        assert_eq!(parse(INPUT), Ok(("", parsed_input())));
     }
 
     #[test]
