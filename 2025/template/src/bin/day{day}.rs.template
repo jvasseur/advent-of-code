@@ -11,7 +11,7 @@ struct Input {
 }
 
 impl Input {
-    fn new(ranges: impl Into<Vec<Value>>) -> Self {
+    fn new(values: impl Into<Vec<Value>>) -> Self {
         Self { values: values.into() }
     }
 }
