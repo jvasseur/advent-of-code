@@ -61,14 +61,14 @@ fn pairs_by_distance<'a>(input: &'a Input) -> Vec<(&'a Point, &'a Point)> {
         .collect()
 }
 
-struct Circuit<'a>(Vec<HashSet<&'a Point>>);
+struct Circuitry<'a>(Vec<HashSet<&'a Point>>);
 
-impl<'a> Circuit<'a> {
+impl<'a> Circuitry<'a> {
     fn new(input: &'a Input) -> Self{
         Self(input.into_iter().map(|a| HashSet::from([a])).collect())
     }
 
-    fn groups(&self) -> &Vec<HashSet<&'a Point>> {
+    fn circuits(&self) -> &Vec<HashSet<&'a Point>> {
         &self.0
     }
 
@@ -89,13 +89,13 @@ impl<'a> Circuit<'a> {
 }
 
 fn solve_part1(input: &Input, connections: usize) -> usize {
-    let mut circuit = Circuit::new(input);
+    let mut circuitry = Circuitry::new(input);
 
     for (a, b) in pairs_by_distance(input).into_iter().take(connections) {
-        circuit.connect(a, b);
+        circuitry.connect(a, b);
     }
 
-    circuit.groups().into_iter()
+    circuitry.circuits().into_iter()
         .map(|group| group.len())
         .sorted()
         .rev()
@@ -104,12 +104,12 @@ fn solve_part1(input: &Input, connections: usize) -> usize {
 }
 
 fn solve_part2(input: &Input) -> Coordinate {
-    let mut circuit = Circuit::new(input);
+    let mut circuitry = Circuitry::new(input);
 
     for (a, b) in pairs_by_distance(input) {
-        circuit.connect(a, b);
+        circuitry.connect(a, b);
 
-        if circuit.groups().len() == 1 {
+        if circuitry.circuits().len() == 1 {
             return a.0 * b.0;
         }
     }
