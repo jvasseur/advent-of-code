@@ -54,21 +54,27 @@ fn euclidian_distance(a: &Point, b: &Point) -> f32 {
     ((a.0 as f32 - b.0 as f32).powi(2) + (a.1 as f32 - b.1 as f32).powi(2) + (a.2 as f32 - b.2 as f32).powi(2)).sqrt()
 }
 
-fn solve_part1(input: &Input, connections: usize) -> usize {
-    let distances = input.into_iter()
+fn pairs_by_distance<'a>(input: &'a Input) -> Vec<(&'a Point, &'a Point)> {
+    input.into_iter()
         .tuple_combinations()
-        .map(|(a, b)| (a, b, euclidian_distance(a, b)))
-        .sorted_by(|(_, _, a), (_, _, b)| a.partial_cmp(b).unwrap())
-        .collect_vec();
+        .sorted_by(|(a1, b1), (a2, b2)| euclidian_distance(a1, b1).partial_cmp(&euclidian_distance(a2, b2)).unwrap())
+        .collect()
+}
 
-    let mut groups = input.into_iter()
-        .map(|a| HashSet::from([a]))
-        .collect_vec();
+struct Circuit<'a>(Vec<HashSet<&'a Point>>);
 
-    for i in 0..connections {
-        let (a, b, _) = distances[i];
+impl<'a> Circuit<'a> {
+    fn new(input: &'a Input) -> Self{
+        Self(input.into_iter().map(|a| HashSet::from([a])).collect())
+    }
 
-        let (connected, mut rest): (Vec<_>, Vec<_>) = groups.into_iter()
+    fn groups(&self) -> &Vec<HashSet<&'a Point>> {
+        &self.0
+    }
+
+    fn connect(&mut self, a: &'a Point, b: &'a Point) {
+        let (connected, mut rest): (Vec<_>, Vec<_>) = self.0.iter()
+            .cloned()
             .partition(|group| group.contains(a) || group.contains(b));
 
         let mut group = HashSet::new();
@@ -78,10 +84,18 @@ fn solve_part1(input: &Input, connections: usize) -> usize {
 
         rest.push(group);
 
-        groups = rest;
+        self.0 = rest;
+    }
+}
+
+fn solve_part1(input: &Input, connections: usize) -> usize {
+    let mut circuit = Circuit::new(input);
+
+    for (a, b) in pairs_by_distance(input).into_iter().take(connections) {
+        circuit.connect(a, b);
     }
 
-    groups.into_iter()
+    circuit.groups().into_iter()
         .map(|group| group.len())
         .sorted()
         .rev()
@@ -90,30 +104,12 @@ fn solve_part1(input: &Input, connections: usize) -> usize {
 }
 
 fn solve_part2(input: &Input) -> Coordinate {
-    let distances = input.into_iter()
-        .tuple_combinations()
-        .map(|(a, b)| (a, b, euclidian_distance(a, b)))
-        .sorted_by(|(_, _, a), (_, _, b)| a.partial_cmp(b).unwrap())
-        .collect_vec();
+    let mut circuit = Circuit::new(input);
 
-    let mut groups = input.into_iter()
-        .map(|a| HashSet::from([a]))
-        .collect_vec();
+    for (a, b) in pairs_by_distance(input) {
+        circuit.connect(a, b);
 
-    for (a, b, _) in distances {
-        let (connected, mut rest): (Vec<_>, Vec<_>) = groups.into_iter()
-            .partition(|group| group.contains(a) || group.contains(b));
-
-        let mut group = HashSet::new();
-        for set in connected {
-            group.extend(set);
-        }
-
-        rest.push(group);
-
-        groups = rest;
-
-        if groups.len() == 1 {
+        if circuit.groups().len() == 1 {
             return a.0 * b.0;
         }
     }
