@@ -133,6 +133,17 @@ impl std::ops::Add<Vector> for &Point {
     }
 }
 
+impl std::ops::Sub<Vector> for Point {
+    type Output = Point;
+
+    fn sub(self, rhs: Vector) -> Self::Output {
+        Point {
+            row: self.row - rhs.row,
+            col: self.col - rhs.col,
+        }
+    }
+}
+
 impl std::ops::Sub<Vector> for &Point {
     type Output = Point;
 
